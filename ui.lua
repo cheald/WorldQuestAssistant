@@ -72,12 +72,14 @@ local function CreateButtonGroup()
   local SearchFrame = CreateFrame("Button", nil, ButtonsFrame, "UIPanelButtonTemplate")
   local NewGroupFrame = CreateFrame("Button", nil, ButtonsFrame, "UIPanelButtonTemplate")
   local LeavePartyFrame = CreateFrame("Button", nil, ButtonsFrame, "UIPanelCloseButton")
+  local SPACING = 4
+  local SIZE = 25
 
   local f
 
   f = SearchFrame
-  f:SetSize(22, 22)
-  f.tooltipText = "Find a new group for this world quest"
+  f:SetSize(SIZE, SIZE)
+  f.tooltipText = L["Find a new group for this world quest"]
   f:SetNormalTexture("Interface/Icons/inv_darkmoon_eye")
   f:SetScript("OnEnter", showTooltip)
   f:SetScript("OnLeave", hideTooltip)
@@ -87,10 +89,10 @@ local function CreateButtonGroup()
   end)
 
   f = NewGroupFrame
-  f:SetSize(22, 22)
+  f:SetSize(SIZE, SIZE)
   f:SetNormalTexture("Interface/Icons/inv_misc_groupneedmore")
-  f:SetPoint("TOPLEFT", SearchFrame, "TOPRIGHT", 8, 0)
-  f.tooltipText = "Create a new group"
+  f:SetPoint("TOPLEFT", SearchFrame, "TOPRIGHT", SPACING, 0)
+  f.tooltipText = L["Create a new group"]
   f:SetScript("OnEnter", showTooltip)
   f:SetScript("OnLeave", hideTooltip)
   f:SetScript("OnClick", function()
@@ -107,8 +109,8 @@ local function CreateButtonGroup()
       self:Show()
     end
   end
-  f:SetSize(22, 22)
-  f:SetPoint("TOPLEFT", NewGroupFrame, "TOPRIGHT", 8, 0)
+  f:SetSize(SIZE, SIZE)
+  f:SetPoint("TOPLEFT", NewGroupFrame, "TOPRIGHT", SPACING, 0)
   f:SetNormalTexture("Interface/Tooltips/CHATBUBBLE-BACKGROUND")
   f:SetScript("OnClick", function()
     local spec = GetSpecializationRole(GetSpecialization())
@@ -122,7 +124,7 @@ local function CreateButtonGroup()
     end
     ApplyFrame:SetPendingInvites()
   end)
-  f.tooltipText = "Apply to any groups awaiting your application"
+  f.tooltipText = L["Apply to groups for this quest"]
   f:SetScript("OnEnter", showTooltip)
   f:SetScript("OnLeave", hideTooltip)
   f.glow = CreateFrame("Frame", nil, ApplyFrame, "ActionBarButtonSpellActivationAlert")
@@ -130,7 +132,6 @@ local function CreateButtonGroup()
   f.glow.animIn:Stop()
   local frameWidth, frameHeight = f:GetSize()
   f.glow:SetSize(frameWidth * 1.4, frameHeight * 1.4)
-  mod:Print(frameWidth * 1.4, frameHeight * 1.4)
 	f.glow:SetPoint("TOPLEFT", ApplyFrame, "TOPLEFT", -frameWidth * 0.2, frameHeight * 0.2);
 	f.glow:SetPoint("BOTTOMRIGHT", ApplyFrame, "BOTTOMRIGHT", frameWidth * 0.2, -frameHeight * 0.2);
   f.glow.animIn:Play()
@@ -145,7 +146,7 @@ local function CreateButtonGroup()
   f:SetScript("OnClick", function()
     LeaveParty()
   end)
-  f.tooltipText = "Leave Party"
+  f.tooltipText = L["Leave Party"]
   f:SetScript("OnEnter", showTooltip)
   f:SetScript("OnLeave", hideTooltip)
 
@@ -159,7 +160,7 @@ local function CreateButtonGroup()
       blockAttachments[block.id] = f
       f:Show()
       f:ClearAllPoints()
-      f:SetPoint("TOPLEFT", block, "TOPRIGHT", -15, 0)
+      f:SetPoint("TOPLEFT", block, "TOPRIGHT", 12, 0)
     else
       f:Hide()
     end
@@ -231,7 +232,7 @@ function mod.UI:GetTrackerBlocks(callback)
   if not ObjectiveTrackerFrame.MODULES then return end
   for i, module in ipairs(ObjectiveTrackerFrame.MODULES) do
     for name, block in pairs(module.usedBlocks) do
-      if QuestUtils_IsQuestWorldQuest(block.id) and GetQuestLogIndexByID(block.id) ~= 0 then
+      if mod:IsEligibleQuest(block.id) then
         callback(block)
       end
     end
