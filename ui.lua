@@ -72,8 +72,25 @@ local function CreateButtonGroup()
   local SearchFrame = CreateFrame("Button", nil, ButtonsFrame, "UIPanelButtonTemplate")
   local NewGroupFrame = CreateFrame("Button", nil, ButtonsFrame, "UIPanelButtonTemplate")
   local LeavePartyFrame = CreateFrame("Button", nil, ButtonsFrame, "UIPanelCloseButton")
-  local SPACING = 4
   local SIZE = 25
+
+  local function updateLayout(block)
+    local anchor = ObjectiveTrackerFrame:GetLeft() > (UIParent:GetWidth() / 2) and "RIGHT" or "LEFT"
+    local otherAnchor = anchor == "LEFT" and "RIGHT" or "LEFT"
+    local SPACING = anchor == "RIGHT" and -4 or 4
+    local OFFSET = anchor == "RIGHT" and -12 or 12
+
+    SearchFrame:ClearAllPoints()
+    SearchFrame:SetPoint("TOP" .. anchor, ButtonsFrame, "TOP" .. anchor)
+    NewGroupFrame:ClearAllPoints()
+    NewGroupFrame:SetPoint("TOP" .. anchor, SearchFrame, "TOP" .. otherAnchor, SPACING, 0)
+    ApplyFrame:ClearAllPoints()
+    ApplyFrame:SetPoint("TOP" .. anchor, NewGroupFrame, "TOP" .. otherAnchor, SPACING, 0)
+    LeavePartyFrame:ClearAllPoints()
+    LeavePartyFrame:SetPoint("TOP" .. anchor, ButtonsFrame, "TOP" .. anchor, 0, 0)
+    ButtonsFrame:ClearAllPoints()
+    ButtonsFrame:SetPoint("TOP" .. anchor, block, "TOP" .. otherAnchor, OFFSET, 0)
+  end
 
   local f
 
@@ -83,7 +100,6 @@ local function CreateButtonGroup()
   f:SetNormalTexture("Interface/Icons/inv_darkmoon_eye")
   f:SetScript("OnEnter", showTooltip)
   f:SetScript("OnLeave", hideTooltip)
-  f:SetPoint("TOPLEFT", ButtonsFrame, "TOPLEFT")
   f:SetScript("OnClick", function()
     mod:FindQuestGroups(ButtonsFrame.questID)
   end)
@@ -91,7 +107,6 @@ local function CreateButtonGroup()
   f = NewGroupFrame
   f:SetSize(SIZE, SIZE)
   f:SetNormalTexture("Interface/Icons/inv_misc_groupneedmore")
-  f:SetPoint("TOPLEFT", SearchFrame, "TOPRIGHT", SPACING, 0)
   f.tooltipText = L["Create a new group"]
   f:SetScript("OnEnter", showTooltip)
   f:SetScript("OnLeave", hideTooltip)
@@ -110,7 +125,6 @@ local function CreateButtonGroup()
     end
   end
   f:SetSize(SIZE, SIZE)
-  f:SetPoint("TOPLEFT", NewGroupFrame, "TOPRIGHT", SPACING, 0)
   f:SetNormalTexture("Interface/Tooltips/CHATBUBBLE-BACKGROUND")
   f:SetScript("OnClick", function()
     local spec = GetSpecializationRole(GetSpecialization())
@@ -141,8 +155,6 @@ local function CreateButtonGroup()
   f = LeavePartyFrame
   f:Hide()
   f:SetSize(30, 30)
-  f:SetPoint("TOPLEFT", ButtonsFrame, "TOPLEFT", 0, 0)
-  -- f:SetNormalTexture("Interface/Buttons/UI-Panel-MinimizeButton-Up")
   f:SetScript("OnClick", function()
     LeaveParty()
   end)
@@ -159,8 +171,7 @@ local function CreateButtonGroup()
       f.questID = block.id
       blockAttachments[block.id] = f
       f:Show()
-      f:ClearAllPoints()
-      f:SetPoint("TOPLEFT", block, "TOPRIGHT", 12, 0)
+      updateLayout(block)
     else
       f:Hide()
     end
