@@ -137,7 +137,6 @@ end
 function mod:QUEST_TURNED_IN(event, questID, experience, money)
   if QuestUtils_IsQuestWorldQuest(questID) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0 then
     automation.questComplete = true
-    table.wipe(self.pendingGroups)
     local info = self:GetQuestInfo(questID)
 
     if mod.db.profile.alertComplete then
@@ -148,6 +147,8 @@ function mod:QUEST_TURNED_IN(event, questID, experience, money)
     elseif mod.db.profile.doneBehavior == "leave" then
       LeaveParty()
     end
+    table.wipe(self.pendingGroups)
+    self.activeQuestID = nil
   end
 end
 
