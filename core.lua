@@ -111,6 +111,14 @@ function mod:IsRaidCompatible(questID)
   return false
 end
 
+function mod:MaxMembersForQuest()
+  if self:IsRaidCompatible(self.activeQuestID) then
+    return 40
+  else
+    return 5
+  end
+end
+
 function mod:QUEST_TURNED_IN(event, questID, experience, money)
   if QuestUtils_IsQuestWorldQuest(questID) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0 then
     table.wipe(self.pendingGroups)
@@ -181,7 +189,7 @@ function mod:ApplyToGroups()
 
   for i, result in ipairs(searchResults) do
     local id, _, name, description, _, ilvl, _, _, _, _, _, _, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
-    if members < 5 and name == self.currentQuestInfo.questName then
+    if members < self:MaxMembersForQuest() and name == self.currentQuestInfo.questName then
       tinsert(self.pendingGroups, result)
     end
   end

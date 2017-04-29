@@ -131,8 +131,8 @@ local function CreateButtonGroup()
     local result = tremove(mod.pendingGroups)
     if result then
       local id, activityID, name, comment, voiceChat, iLvl, honorLevel, age, numBNetFriends, numCharFriends, numGuildMates, isDelisted, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
-      if members and members < 5 and not isDelisted then
-        mod:Print(string.format(L["Applying to %s - %s (%s - %s members)"], name, comment, author, members))
+      if members and members < mod:MaxMembersForQuest() and not isDelisted then
+        mod:Print(string.format(L["Applying to %s - %s (%s - %s members)"], name or "(no name)", comment or "(no description)", author or "(unknown leader)", members or 0))
         C_LFGList.ApplyToGroup(result, "WorldQuestAssistantUser-" .. tostring(ButtonsFrame.questID), spec == "TANK", spec == "HEALER", spec == "DAMAGER")
       end
     end
