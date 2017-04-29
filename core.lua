@@ -85,7 +85,6 @@ end
 
 function mod:QUEST_ACCEPTED(event, index, questID)
   if self:IsEligibleQuest(questID) then
-    automation.questComplete = true
     self.activeQuestID = questID
     self:ResetAutomation()
     C_Timer.After(3, function()
@@ -137,6 +136,7 @@ end
 
 function mod:QUEST_TURNED_IN(event, questID, experience, money)
   if QuestUtils_IsQuestWorldQuest(questID) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0 then
+    automation.questComplete = true
     table.wipe(self.pendingGroups)
     local info = self:GetQuestInfo(questID)
 
@@ -243,7 +243,6 @@ function mod:JoinNextGroup(questID)
   if result then
     local id, activityID, name, comment, voiceChat, iLvl, honorLevel, age, numBNetFriends, numCharFriends, numGuildMates, isDelisted, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
     if members and members < mod:MaxMembersForQuest() and not isDelisted then
-      -- mod:Print(string.format(L["Applying to %s - %s (%s - %s members)"], name or "(no name)", comment or "(no description)", author or "(unknown leader)", members or 0))
       C_LFGList.ApplyToGroup(result, "WorldQuestAssistantUser-" .. tostring(questID), spec == "TANK", spec == "HEALER", spec == "DAMAGER")
     end
   end
@@ -257,8 +256,10 @@ function mod:ResetAutomation()
 end
 
 function mod:Automate()
-  if mod:IsInParty() and automation.questComplete then
-    LeaveParty()
+  if mod:IsInParty() then
+    if automation.questComplete then
+      LeaveParty()
+    end
   elseif LFGListInviteDialog:IsVisible() then
     LFGListInviteDialog.AcceptButton:Click()
   elseif self.activeQuestID and #self.pendingGroups == 0 then
