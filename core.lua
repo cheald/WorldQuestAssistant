@@ -31,6 +31,7 @@ end
 function mod:QUEST_ACCEPTED(event, index, questID)
   if QuestUtils_IsQuestWorldQuest(questID) then
     self.activeQuestID = questID
+    table.wipe(self.pendingGroups)
     C_Timer.After(3, function()
       self.UI:SetupTrackerBlocks()
     end)
@@ -81,7 +82,9 @@ function mod:GetQuestInfo(questID)
 end
 
 function mod:FindQuestGroups(questID)
-  local info = self:GetQuestInfo(questID or self.activeQuestID)
+  table.wipe(self.pendingGroups)
+  self.activeQuestID = questID or self.activeQuestID
+  local info = self:GetQuestInfo(self.activeQuestID)
   self.currentQuestInfo = info
   C_LFGList.Search(1, info.questName, 0, 4, {})
 end

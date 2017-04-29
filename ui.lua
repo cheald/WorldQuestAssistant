@@ -101,7 +101,7 @@ local function CreateButtonGroup()
   f.SetPendingInvites = function(self)
     self:SetEnabled(#mod.pendingGroups > 0)
     self:SetText(#mod.pendingGroups)
-    if #mod.pendingGroups == 0 then
+    if #mod.pendingGroups == 0 or mod.activeQuestID ~= ButtonsFrame.questID then
       self:Hide()
     else
       self:Show()
@@ -145,7 +145,7 @@ local function CreateButtonGroup()
   f:SetScript("OnClick", function()
     LeaveParty()
   end)
-  f.tooltipText = "LeaveParty"
+  f.tooltipText = "Leave Party"
   f:SetScript("OnEnter", showTooltip)
   f:SetScript("OnLeave", hideTooltip)
 
