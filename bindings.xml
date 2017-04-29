@@ -1,0 +1,5 @@
+<Bindings>
+  <Binding name="WQA_AUTOMATE" header="WQAHEAD" category="ADDONS">
+    WQA:Automate()
+  </Binding>
+</Bindings>

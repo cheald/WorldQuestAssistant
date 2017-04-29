@@ -13,6 +13,14 @@ local otherEligibleQuests = {
   [45406] = true,  -- The Storm's Fury, Stormheim invasion
 }
 
+local automation = {
+  lastTime = 0,
+  hasSearched = false,
+  didAutotmatedSearch = false,
+  questComplete = false
+}
+
+
 function mod:OnInitialize()
   self.pendingGroups = {}
   local defaults = {
@@ -60,22 +68,30 @@ function mod:PLAYER_ENTERING_WORLD()
 end
 
 function mod:GROUP_ROSTER_UPDATE()
-  if GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0 then
+  if self:IsInParty() then
     table.wipe(self.pendingGroups)
     if UnitIsGroupLeader("player") and not IsInRaid() and mod:IsRaidCompatible(self.activeQuestID) then
       ConvertToRaid()
     end
+  else
+    StaticPopup_Hide("WQA_LEAVE_GROUP")
   end
   self.UI:SetupTrackerBlocks()
 end
 
+function mod:IsInParty()
+  return GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0
+end
+
 function mod:QUEST_ACCEPTED(event, index, questID)
   if self:IsEligibleQuest(questID) then
+    automation.questComplete = true
     self.activeQuestID = questID
+    self:ResetAutomation()
     C_Timer.After(3, function()
       self.UI:SetupTrackerBlocks()
     end)
-    if GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) == 0 then
+    if not mod:IsInParty() then
       local info = self:GetQuestInfo(questID)
       if mod.db.profile.usePopups.joinGroup then
         StaticPopupDialogs["WQA_FIND_GROUP"].text = string.format(L["Do you want to find a group for '%s'?"], info.questName)
@@ -169,6 +185,8 @@ function mod:GetQuestInfo(questID)
 end
 
 function mod:FindQuestGroups(questID)
+  StaticPopup_Hide("WQA_FIND_GROUP")
+  StaticPopup_Hide("WQA_NEW_GROUP")
   table.wipe(self.pendingGroups)
   self.activeQuestID = questID or self.activeQuestID
   local info = self:GetQuestInfo(self.activeQuestID)
@@ -177,6 +195,8 @@ function mod:FindQuestGroups(questID)
 end
 
 function mod:CreateQuestGroup(questID)
+  StaticPopup_Hide("WQA_FIND_GROUP")
+  StaticPopup_Hide("WQA_NEW_GROUP")
   local info = self:GetQuestInfo(questID or self.activeQuestID)
   self.currentQuestInfo = info
   _G.C_LFGList.CreateListing(info.activityID, "", 0, 0, "", "WorldQuestAssistant QID#" .. self.activeQuestID, true, false, info.questID)
@@ -207,9 +227,55 @@ function mod:ApplyToGroups()
 
   if #self.pendingGroups == 0 then
     self:Print("No acceptable groups found.")
-
-    StaticPopup_Show("WQA_NEW_GROUP")
+    if mod.db.profile.createGroup and not automation.didAutotmatedSearch then
+      StaticPopup_Show("WQA_NEW_GROUP")
+    end
   else
     mod.UI:SetupTrackerBlocks()
   end
+
+  automation.didAutotmatedSearch = false
+end
+
+function mod:JoinNextGroup(questID)
+  local spec = GetSpecializationRole(GetSpecialization())
+  local result = tremove(mod.pendingGroups)
+  if result then
+    local id, activityID, name, comment, voiceChat, iLvl, honorLevel, age, numBNetFriends, numCharFriends, numGuildMates, isDelisted, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
+    if members and members < mod:MaxMembersForQuest() and not isDelisted then
+      -- mod:Print(string.format(L["Applying to %s - %s (%s - %s members)"], name or "(no name)", comment or "(no description)", author or "(unknown leader)", members or 0))
+      C_LFGList.ApplyToGroup(result, "WorldQuestAssistantUser-" .. tostring(questID), spec == "TANK", spec == "HEALER", spec == "DAMAGER")
+    end
+  end
+  mod.UI:SetupTrackerBlocks()
+end
+
+function mod:ResetAutomation()
+  automation.hasSearched = false
+  automation.didAutotmatedSearch = false
+  automation.lastTime = 0
+end
+
+function mod:Automate()
+  if mod:IsInParty() and automation.questComplete then
+    LeaveParty()
+  elseif LFGListInviteDialog:IsVisible() then
+    LFGListInviteDialog.AcceptButton:Click()
+  elseif self.activeQuestID and #self.pendingGroups == 0 then
+    local waitedLongEnoughToCreateGroup = GetTime() - automation.lastTime > 2
+    if automation.hasSearched and waitedLongEnoughToCreateGroup then
+      self:Print(L["Automate: No groups found, creating a new one"])
+      self:CreateQuestGroup(self.activeQuestID)
+    else
+      automation.didAutotmatedSearch = true
+      automation.hasSearched = true
+      self:Print(L["Automate: Finding groups"])
+      self:FindQuestGroups(self.activeQuestID)
+    end
+  elseif #self.pendingGroups > 0 then
+    self:Print(L["Automate: Joining next group"])
+    mod:JoinNextGroup(self.activeQuestID)
+  end
+  automation.questComplete = false
+  automation.lastTime = GetTime()
 end

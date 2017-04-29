@@ -2,6 +2,9 @@ local mod = _G.WQA
 local L = LibStub("AceLocale-3.0"):GetLocale("WorldQuestAssistant")
 mod.UI = {}
 
+BINDING_HEADER_WQAHEAD = L["World Quest Assistant"]
+BINDING_NAME_WQA_AUTOMATE = L["Automate group find/join"]
+
 StaticPopupDialogs["WQA_FIND_GROUP"] = {
   text = L["Do you want to find a group for this quest?"],
   button1 = L["Yes"],
@@ -127,16 +130,7 @@ local function CreateButtonGroup()
   f:SetSize(SIZE, SIZE)
   f:SetNormalTexture("Interface/Tooltips/CHATBUBBLE-BACKGROUND")
   f:SetScript("OnClick", function()
-    local spec = GetSpecializationRole(GetSpecialization())
-    local result = tremove(mod.pendingGroups)
-    if result then
-      local id, activityID, name, comment, voiceChat, iLvl, honorLevel, age, numBNetFriends, numCharFriends, numGuildMates, isDelisted, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
-      if members and members < mod:MaxMembersForQuest() and not isDelisted then
-        mod:Print(string.format(L["Applying to %s - %s (%s - %s members)"], name or "(no name)", comment or "(no description)", author or "(unknown leader)", members or 0))
-        C_LFGList.ApplyToGroup(result, "WorldQuestAssistantUser-" .. tostring(ButtonsFrame.questID), spec == "TANK", spec == "HEALER", spec == "DAMAGER")
-      end
-    end
-    ApplyFrame:SetPendingInvites()
+    mod:JoinNextGroup(ButtonsFrame.questID)
   end)
   f.tooltipText = L["Apply to groups for this quest"]
   f:SetScript("OnEnter", showTooltip)
