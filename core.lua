@@ -227,7 +227,7 @@ function mod:ApplyToGroups()
 
   if #self.pendingGroups == 0 then
     self:Print("No acceptable groups found.")
-    if mod.db.profile.createGroup and not automation.didAutotmatedSearch then
+    if mod.db.profile.usePopups.createGroup and not automation.didAutotmatedSearch then
       StaticPopup_Show("WQA_NEW_GROUP")
     end
   else
