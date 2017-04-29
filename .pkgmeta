@@ -13,3 +13,4 @@ externals:
   libs/AceEvent-3.0: https://repos.wowace.com/wow/ace3/trunk/AceEvent-3.0/
   libs/AceGUI-3.0: https://repos.wowace.com/wow/ace3/trunk/AceGUI-3.0/
   libs/AceLocale-3.0: https://repos.wowace.com/wow/ace3/trunk/AceLocale-3.0/
+  libs/LibRealmInfo: svn://svn.wowinterface.com/LibRealmInfo-1100/trunk/

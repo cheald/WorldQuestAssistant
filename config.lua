@@ -56,6 +56,17 @@ local options = {
           set = function(info, v)
             mod.db.profile.alertComplete = v
           end
+        },
+        joinPVP = {
+          name = L["Join groups on PVP realms"],
+          type = "toggle",
+          width = "full",
+          get = function()
+            return mod.db.profile.joinPVP
+          end,
+          set = function(info, v)
+            mod.db.profile.joinPVP = v
+          end
         }
       }
     }

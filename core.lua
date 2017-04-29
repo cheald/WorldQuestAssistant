@@ -2,6 +2,7 @@ local addon, private = ...
 local mod = LibStub("AceAddon-3.0"):NewAddon(addon, "AceConsole-3.0", "AceEvent-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("WorldQuestAssistant")
 local ACD3 = LibStub("AceConfigDialog-3.0")
+local LRI = LibStub("LibRealmInfo")
 
 _G.WQA = mod
 
@@ -21,7 +22,8 @@ function mod:OnInitialize()
         createGroup = true
       },
       doneBehavior = "ask",
-      alertComplete = true
+      alertComplete = true,
+      joinPVP = true
     }
   }
 	self.db = LibStub("AceDB-3.0"):New("WorldQuestAssistantDB", defaults)
@@ -105,8 +107,6 @@ function mod:IsRaidCompatible(questID)
   local info = self:GetQuestInfo(questID)
   if info.rarity == LE_WORLD_QUEST_QUALITY_EPIC then
     return true
-  elseif info.rarity == LE_WORLD_QUEST_QUALITY_RARE and info.elite then
-    return true
   end
   return false
 end
@@ -185,14 +185,25 @@ end
 
 function mod:ApplyToGroups()
   local searchCount, searchResults = C_LFGList.GetSearchResults()
-  local applications = 0
 
+  local memberCounts = {}
   for i, result in ipairs(searchResults) do
     local id, _, name, description, _, ilvl, _, _, _, _, _, _, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
-    if members < self:MaxMembersForQuest() and name == self.currentQuestInfo.questName then
+    local leader, realm = strsplit("-", author or "Unknown", 2)
+    local canJoin = true
+    if realm then
+      local realmType = select(4, LRI:GetRealmInfo(realm))
+      canJoin = mod.db.profile.joinPVP or not (realmType == "PVP" or realmType == "RPPVP")
+    end
+    if members < self:MaxMembersForQuest() and name == self.currentQuestInfo.questName and canJoin then
       tinsert(self.pendingGroups, result)
+      memberCounts[result] = members
     end
   end
+
+  table.sort(self.pendingGroups, function(a, b)
+    return memberCounts[b] > memberCounts[a]
+  end)
 
   if #self.pendingGroups == 0 then
     self:Print("No acceptable groups found.")

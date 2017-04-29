@@ -26,3 +26,4 @@ L["When a quest is complete"] = true
 L["Prompt to start a new group if no groups can be found"] = true
 L["Ask to join or start a group when starting a world quest"] = true
 L["Yes"] = true
+L["Join groups on PVP realms"] = true
