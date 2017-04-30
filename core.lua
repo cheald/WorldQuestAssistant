@@ -102,7 +102,11 @@ function mod:QUEST_ACCEPTED(event, index, questID)
       if mod.db.profile.usePopups.joinGroup then
         C_Timer.After(1.5, function()
           StaticPopupDialogs["WQA_FIND_GROUP"].text = string.format(L["Do you want to find a group for '%s'?"], info.questName)
+          StaticPopupDialogs["WQA_FIND_GROUP"].OnAccept = function()
+            mod:FindQuestGroups(questID)
+          end
           StaticPopup_Show("WQA_FIND_GROUP")
+
         end)
       end
     end
