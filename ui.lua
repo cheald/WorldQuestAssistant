@@ -23,7 +23,7 @@ StaticPopupDialogs["WQA_FIND_GROUP"] = {
 }
 
 StaticPopupDialogs["WQA_NEW_GROUP"] = {
-  text = L["Do you want to create a new group finder entry?"],
+  text = L["No open groups found. Do you want to create a new group?"],
   button1 = L["Yes"],
   button2 = L["No"],
   OnAccept = function()
