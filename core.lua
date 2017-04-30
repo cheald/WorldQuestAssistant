@@ -100,8 +100,10 @@ function mod:QUEST_ACCEPTED(event, index, questID)
     if not mod:IsInParty() then
       local info = self:GetQuestInfo(questID)
       if mod.db.profile.usePopups.joinGroup then
-        StaticPopupDialogs["WQA_FIND_GROUP"].text = string.format(L["Do you want to find a group for '%s'?"], info.questName)
-        StaticPopup_Show("WQA_FIND_GROUP")
+        C_Timer.After(1.5, function()
+          StaticPopup_Show("WQA_FIND_GROUP")
+          StaticPopupDialogs["WQA_FIND_GROUP"].text = string.format(L["Do you want to find a group for '%s'?"], info.questName)
+        end)
       end
     end
   end
