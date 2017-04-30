@@ -1,6 +1,6 @@
 ## Interface: 70200
 ## Title: World Quest Assistant
-## Version: 0.1
+## Version: 0.4.2
 ## Notes: Streamlines creation and finding of groups for world quests
 ## Description: Streamlines creation and finding of groups for world quests
 ## Author: Antiarc (Cenarion Circle-US)

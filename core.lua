@@ -19,10 +19,11 @@ local automation = {
   didAutotmatedSearch = false,
   questComplete = false
 }
-
+local homeRealms = {}
 
 function mod:OnInitialize()
   self.pendingGroups = {}
+
   local defaults = {
     profile = {
       usePopups = {
@@ -30,8 +31,10 @@ function mod:OnInitialize()
         createGroup = true
       },
       doneBehavior = "ask",
+      leaveDelay = 10,
       alertComplete = true,
-      joinPVP = true
+      joinPVP = true,
+      preferHome = true
     }
   }
 	self.db = LibStub("AceDB-3.0"):New("WorldQuestAssistantDB", defaults)
@@ -61,6 +64,10 @@ function mod:Config()
 end
 
 function mod:PLAYER_ENTERING_WORLD()
+  for i, realm in ipairs(GetAutoCompleteRealms()) do
+    homeRealms[realm] = true
+  end
+
   local id = self:GetCurrentWorldQuestID()
   if id then
     self:QUEST_ACCEPTED(nil, nil, id)
@@ -145,7 +152,10 @@ function mod:QUEST_TURNED_IN(event, questID, experience, money)
     if mod.db.profile.doneBehavior == "ask" then
       StaticPopup_Show("WQA_LEAVE_GROUP")
     elseif mod.db.profile.doneBehavior == "leave" then
-      LeaveParty()
+      C_Timer.After(mod.db.profile.leaveDelay or 0, LeaveParty)
+      if (mod.db.profile.leaveDelay or 0) > 0 then
+        mod:Print(L["Leaving group in %s seconds - grab your loot!"]:format(mod.db.profile.leaveDelay))
+      end
     end
     table.wipe(self.pendingGroups)
     self.activeQuestID = nil
@@ -207,7 +217,7 @@ end
 function mod:ApplyToGroups()
   local searchCount, searchResults = C_LFGList.GetSearchResults()
 
-  local memberCounts = {}
+  local realmInfo = {}
   for i, result in ipairs(searchResults) do
     local id, _, name, description, _, ilvl, _, _, _, _, _, _, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
     local leader, realm = strsplit("-", author or "Unknown", 2)
@@ -218,12 +228,16 @@ function mod:ApplyToGroups()
     end
     if members < self:MaxMembersForQuest() and name == self.currentQuestInfo.questName and canJoin then
       tinsert(self.pendingGroups, result)
-      memberCounts[result] = members
+      realmInfo[result] = {members = members, realm = realm}
     end
   end
 
   table.sort(self.pendingGroups, function(a, b)
-    return memberCounts[b] > memberCounts[a]
+    if mod.db.profile.preferHome and homeRealms[realmInfo[b].realm] and not homeRealms[realmInfo[a].realm] then
+      return true
+    else
+      return realmInfo[b].members > realmInfo[a].members
+    end
   end)
 
   if #self.pendingGroups == 0 then

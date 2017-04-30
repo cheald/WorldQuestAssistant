@@ -172,10 +172,8 @@ local function CreateButtonGroup()
   end
 
   ButtonsFrame.Update = function(self)
-    local inParty = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0
-    local leadingGroup = false
     ApplyFrame:SetPendingInvites()
-    if inParty then
+    if mod:IsInParty() then
       ApplyFrame:Hide()
       NewGroupFrame:Hide()
       SearchFrame:Hide()
