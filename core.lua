@@ -201,6 +201,7 @@ function mod:GetQuestInfo(questID)
   }
 end
 
+local requestedGroupsViaWQA = false
 function mod:FindQuestGroups(questID)
   StaticPopup_Hide("WQA_FIND_GROUP")
   StaticPopup_Hide("WQA_NEW_GROUP")
@@ -208,6 +209,7 @@ function mod:FindQuestGroups(questID)
   self.activeQuestID = questID or self.activeQuestID
   local info = self:GetQuestInfo(self.activeQuestID)
   self.currentQuestInfo = info
+  requestedGroupsViaWQA = true
   C_LFGList.Search(1, info.questName, 0, 4, {})
 end
 
@@ -222,6 +224,10 @@ end
 
 function mod:ApplyToGroups()
   local searchCount, searchResults = C_LFGList.GetSearchResults()
+  if not self:GetCurrentWorldQuestID() or not requestedGroupsViaWQA then
+    return
+  end
+  requestedGroupsViaWQA = false
 
   local realmInfo = {}
   for i, result in ipairs(searchResults) do
