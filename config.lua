@@ -12,6 +12,7 @@ local options = {
           type = "keybinding",
           name = L["Automation Keybind"],
           desc = L["Automation Keybind Help"],
+          order = 10,
           get = function()
             return GetBindingKey("WQA_AUTOMATE")
           end,
@@ -127,6 +128,48 @@ local options = {
               set = function(info, v)
                 mod.db.profile.alertComplete = v
               end
+            }
+          }
+        },
+        filters = {
+          type = "group",
+          name = L["Quest Filters"],
+          args = {
+            petBattles = {
+              type = "toggle",
+              name = L["Pet Battle Quests"],
+              desc = L["Pet Battles Filter Description"],
+              width = "full",
+              descStyle = "inline",
+              get = function() return mod.db.profile.filters.petBattles end,
+              set = function(info, v) mod.db.profile.filters.petBattles = v end
+            },
+            tradeskills = {
+              type = "toggle",
+              name = L["Tradeskill Quests"],
+              desc = L["Tradeskills Filter Description"],
+              width = "full",
+              descStyle = "inline",
+              get = function() return mod.db.profile.filters.tradeskills end,
+              set = function(info, v) mod.db.profile.filters.tradeskills = v end
+            },
+            pvp = {
+              type = "toggle",
+              name = L["PVP Quests"],
+              desc = L["PVP Filter Description"],
+              width = "full",
+              descStyle = "inline",
+              get = function() return mod.db.profile.filters.pvp end,
+              set = function(info, v) mod.db.profile.filters.pvp = v end
+            },
+            nonElite = {
+              type = "toggle",
+              name = L["Non-Elite Quests"],
+              desc = L["Non-Elite Filter Description"],
+              width = "full",
+              descStyle = "inline",
+              get = function() return mod.db.profile.filters.nonElite end,
+              set = function(info, v) mod.db.profile.filters.nonElite = v end
             }
           }
         }

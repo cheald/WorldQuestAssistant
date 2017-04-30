@@ -34,7 +34,13 @@ function mod:OnInitialize()
       leaveDelay = 10,
       alertComplete = true,
       joinPVP = true,
-      preferHome = true
+      preferHome = true,
+      filters = {
+        petBattles = false,
+        tradeskills = false,
+        pvp = true,
+        nonElite = true
+      }
     }
   }
 	self.db = LibStub("AceDB-3.0"):New("WorldQuestAssistantDB", defaults)
@@ -116,8 +122,10 @@ end
 function mod:IsEligibleQuest(questID)
   if QuestUtils_IsQuestWorldQuest(questID) and GetQuestLogIndexByID(questID) ~= 0 then
     local info = self:GetQuestInfo(questID)
-    if info.worldQuestType == LE_QUEST_TAG_TYPE_PET_BATTLE or
-       info.worldQuestType == LE_QUEST_TAG_TYPE_PROFESSION or
+    if (info.worldQuestType == LE_QUEST_TAG_TYPE_PET_BATTLE and not mod.db.profile.filters.petBattles) or
+       (info.worldQuestType == LE_QUEST_TAG_TYPE_PROFESSION and not mod.db.profile.filters.tradeskills) or
+       (info.worldQuestType == LE_QUEST_TAG_TYPE_PVP and not mod.db.profile.filters.pvp) or
+       (not info.elite and not mod.db.profile.filters.nonElite) or
        info.worldQuestType == LE_QUEST_TAG_TYPE_DUNGEON then
           return false
     end
