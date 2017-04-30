@@ -101,8 +101,8 @@ function mod:QUEST_ACCEPTED(event, index, questID)
       local info = self:GetQuestInfo(questID)
       if mod.db.profile.usePopups.joinGroup then
         C_Timer.After(1.5, function()
-          StaticPopup_Show("WQA_FIND_GROUP")
           StaticPopupDialogs["WQA_FIND_GROUP"].text = string.format(L["Do you want to find a group for '%s'?"], info.questName)
+          StaticPopup_Show("WQA_FIND_GROUP")
         end)
       end
     end
@@ -146,10 +146,10 @@ end
 function mod:QUEST_TURNED_IN(event, questID, experience, money)
   if QuestUtils_IsQuestWorldQuest(questID) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0 then
     automation.questComplete = true
-    local info = self:GetQuestInfo(questID)
 
     if mod.db.profile.alertComplete then
-      SendChatMessage(L["[WQA] Quest '%s' complete!"]:format(info.questName), "PARTY")
+      local questName = self.currentQuestInfo.questName or self:GetQuestInfo(questID).questName
+      SendChatMessage(L["[WQA] Quest '%s' complete!"]:format(questName), IsInRaid() and "RAID" or "PARTY")
     end
     if mod.db.profile.doneBehavior == "ask" then
       StaticPopup_Show("WQA_LEAVE_GROUP")
