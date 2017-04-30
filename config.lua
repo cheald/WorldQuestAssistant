@@ -8,6 +8,22 @@ local options = {
       name = L["Behavior"],
       type = "group",
       args = {
+        keybinding = {
+          type = "keybinding",
+          name = L["Automation Keybind"],
+          desc = L["Automation Keybind Help"],
+          get = function()
+            return GetBindingKey("WQA_AUTOMATE")
+          end,
+          set = function(info, v)
+            local old = GetBindingKey("WQA_AUTOMATE")
+            if old then
+              SetBinding(old)
+            end
+            SetBinding(v, "WQA_AUTOMATE")
+            SaveBindings(GetCurrentBindingSet())
+          end
+        },
         onStart = {
           type = "group",
           name = L["Starting Quests"],

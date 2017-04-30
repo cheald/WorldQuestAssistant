@@ -37,3 +37,5 @@ L["Starting Quests"] = true
 L["When a quest is complete"] = true
 L["World Quest Assistant"] = true
 L["Yes"] = true
+L["Automation Keybind"] = true
+L["Automation Keybind Help"] = "Assigns a key that can be used to find groups, apply for groups, create a new group, and accept group invites."
