@@ -6,13 +6,6 @@ local LRI = LibStub("LibRealmInfo")
 
 _G.WQA = mod
 
-local otherEligibleQuests = {
-  [45795] = true,  -- Presence of Power, Azsuna invasion
-  [44789] = true,  -- Holding the Ramparts, Val'Sharah invasion
-  [45572] = true,  -- Holding Our Ground, Highmountain invasion
-  [45406] = true,  -- The Storm's Fury, Stormheim invasion
-}
-
 local automation = {
   lastTime = 0,
   hasSearched = false,
@@ -112,7 +105,6 @@ function mod:QUEST_ACCEPTED(event, index, questID)
             mod:FindQuestGroups(questID)
           end
           StaticPopup_Show("WQA_FIND_GROUP")
-
         end)
       end
     end
@@ -129,10 +121,13 @@ function mod:IsEligibleQuest(questID)
        info.worldQuestType == LE_QUEST_TAG_TYPE_DUNGEON then
           return false
     end
+    if mod.QuestDB.Blacklist[questID] then
+      return false
+    end
     return true
   end
 
-  if otherEligibleQuests[questID] then
+  if mod.QuestDB.Eligible[questID] then
     return true
   end
 
@@ -142,6 +137,8 @@ end
 function mod:IsRaidCompatible(questID)
   local info = self:GetQuestInfo(questID)
   if info.rarity == LE_WORLD_QUEST_QUALITY_EPIC then
+    return true
+  elseif mod.QuestDB.Raid[questID] then
     return true
   end
   return false
@@ -182,14 +179,24 @@ function mod:GetCurrentWorldQuestID()
       return questID
     end
   end
+
+  for i, module in ipairs(ObjectiveTrackerFrame.MODULES) do
+    for name, block in pairs(module.usedBlocks) do
+      if self:IsEligibleQuest(block.id) then
+        return block.id
+      end
+    end
+  end
+
   return nil
 end
 
 function mod:GetQuestInfo(questID)
   if not questID then return {} end
 
-  local activityID, categoryID, filters, questName = LFGListUtil_GetQuestCategoryData(questID);
+  local activityID, categoryID, filters, questName = LFGListUtil_GetQuestCategoryData(questID)
   local tagID, tagName, worldQuestType, rarity, elite, tradeskillLineIndex
+  questName = questName or QuestUtils_GetQuestName(questID)
   if QuestUtils_IsQuestWorldQuest(questID) then
     tagID, tagName, worldQuestType, rarity, elite, tradeskillLineIndex = GetQuestTagInfo(questID)
   end

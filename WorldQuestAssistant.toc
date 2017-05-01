@@ -14,5 +14,6 @@ embeds.xml
 locale\enUS.lua
 
 core.lua
+quests.lua
 config.lua
 ui.lua
