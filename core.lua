@@ -9,13 +9,14 @@ _G.WQA = mod
 local automation = {
   lastTime = 0,
   hasSearched = false,
-  didAutotmatedSearch = false,
+  didAutomatedSearch = false,
   questComplete = false
 }
 local homeRealms = {}
 
 function mod:OnInitialize()
   self.pendingGroups = {}
+  mod.QuestDB = mod.QuestDB or {Eligible = {}, Blacklist = {}, Raid = {}}
 
   local defaults = {
     profile = {
@@ -48,7 +49,11 @@ function mod:OnInitialize()
   self:RegisterEvent("PLAYER_ENTERING_WORLD")
   self:RegisterEvent("QUEST_ACCEPTED")
   self:RegisterEvent("QUEST_TURNED_IN")
-  self:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED", "ApplyToGroups")
+  self:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED", function()
+    C_Timer.After(0.25, function()
+      mod:ApplyToGroups()
+    end)
+  end)
   self:RegisterEvent("GROUP_ROSTER_UPDATE")
 
   hooksecurefunc("ObjectiveTracker_Update", function()
@@ -88,6 +93,7 @@ function mod:GROUP_ROSTER_UPDATE()
       self:TurnOffRaidConvertWarning()
     end
   else
+    mod:ResetAutomation()
     StaticPopup_Hide("WQA_LEAVE_GROUP")
   end
   self.UI:SetupTrackerBlocks()
@@ -289,16 +295,22 @@ function mod:ApplyToGroups()
     end
   end)
 
+  local binding = GetBindingKey("WQA_AUTOMATE")
+  mod:Print(L["Found %s open groups (%s total). %s"]:format(
+    #self.pendingGroups,
+    #searchResults,
+    #self.pendingGroups > 0 and binding and L["Press %s to join a group."]:format(GetBindingKey("WQA_AUTOMATE")) or ""
+  ))
+
   if #self.pendingGroups == 0 then
-    self:Print("No acceptable groups found.")
-    if mod.db.profile.usePopups.createGroup and not automation.didAutotmatedSearch then
+    if mod.db.profile.usePopups.createGroup and not automation.didAutomatedSearch then
       StaticPopup_Show("WQA_NEW_GROUP")
     end
   else
     mod.UI:SetupTrackerBlocks()
   end
 
-  automation.didAutotmatedSearch = false
+  automation.didAutomatedSearch = false
 end
 
 function mod:JoinNextGroup(questID)
@@ -315,7 +327,7 @@ end
 
 function mod:ResetAutomation()
   automation.hasSearched = false
-  automation.didAutotmatedSearch = false
+  automation.didAutomatedSearch = false
   automation.lastTime = 0
 end
 
@@ -332,9 +344,8 @@ function mod:Automate()
       self:Print(L["Automate: No groups found, creating a new one"])
       self:CreateQuestGroup(self.activeQuestID)
     else
-      automation.didAutotmatedSearch = true
+      automation.didAutomatedSearch = true
       automation.hasSearched = true
-      self:Print(L["Automate: Finding groups"])
       self:FindQuestGroups(self.activeQuestID)
     end
   elseif #self.pendingGroups > 0 then
