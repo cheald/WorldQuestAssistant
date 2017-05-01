@@ -219,8 +219,12 @@ function mod.UI:SetupTrackerBlocks()
   mod.UI:GetTrackerBlocks(function(block)
     local group = blockAttachments[block.id] or GetButtonGroup()
     preserved[block.id] = true
-    group:Attach(block)
-    group:Update()
+    if mod:IsInOtherQueues() then
+      group:Hide()
+    else
+      group:Attach(block)
+      group:Update()
+    end
   end)
 
   for id, block in pairs(blockAttachments) do

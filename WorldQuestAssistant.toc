@@ -12,6 +12,7 @@ embeds.xml
 #@end-no-lib-strip@
 
 locale\enUS.lua
+locale\deDE.lua
 
 core.lua
 quests.lua

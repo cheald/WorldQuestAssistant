@@ -96,7 +96,7 @@ function mod:QUEST_ACCEPTED(event, index, questID)
     C_Timer.After(3, function()
       self.UI:SetupTrackerBlocks()
     end)
-    if not mod:IsInParty() then
+    if not mod:IsInParty() and not mod:IsInOtherQueues() then
       local info = self:GetQuestInfo(questID)
       if mod.db.profile.usePopups.joinGroup then
         C_Timer.After(1.5, function()
@@ -109,6 +109,16 @@ function mod:QUEST_ACCEPTED(event, index, questID)
       end
     end
   end
+end
+
+function mod:IsInOtherQueues()
+  for i = 1, _G.NUM_LE_LFG_CATEGORYS do
+    local mode, submode = GetLFGMode(i)
+    if mode == "queued" then
+      return true
+    end
+  end
+  return false
 end
 
 function mod:IsEligibleQuest(questID)

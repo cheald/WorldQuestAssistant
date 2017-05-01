@@ -7,6 +7,7 @@ local options = {
     config = {
       name = L["Behavior"],
       type = "group",
+      order = 50,
       args = {
         keybinding = {
           type = "keybinding",
@@ -33,6 +34,7 @@ local options = {
           args = {
             join = {
               name = L["Ask to join or start a group when starting a world quest"],
+              desc = L["Ask To Join - Description"],
               type = "toggle",
               width = "full",
               get = function()
@@ -44,6 +46,7 @@ local options = {
             },
             createGroup = {
               name = L["Prompt to start a new group if no groups can be found"],
+              desc = L["Prompt to start a new group - Description"],
               type = "toggle",
               width = "full",
               get = function()
@@ -55,6 +58,7 @@ local options = {
             },
             joinPVP = {
               name = L["Join groups on PVP realms"],
+              desc = L["Join groups on PVP realms - Description"],
               type = "toggle",
               width = "full",
               get = function()
@@ -66,6 +70,7 @@ local options = {
             },
             preferHome = {
               name = L["Prefer groups on home realm"],
+              desc = L["Prefer groups on home realm - Description"],
               type = "toggle",
               width = "full",
               get = function(info)
@@ -120,6 +125,7 @@ local options = {
             },
             alertDone = {
               name = L["Alert party when quest is complete"],
+              desc = L["Alert party when quest is complete - Description"],
               type = "toggle",
               width = "full",
               get = function()
@@ -172,6 +178,33 @@ local options = {
               set = function(info, v) mod.db.profile.filters.nonElite = v end
             }
           }
+        }
+      }
+    },
+    credits = {
+      type = "group",
+      name = L["Credits"],
+      order = 999,
+      args = {
+        header = {
+          type = "header",
+          name = "World Quest Assistant",
+          order = 1,
+        },
+        credits = {
+          type = "description",
+          order = 10,
+          name = [[
+Originally inspiried by World Quest Group Finder and its brief death during the Great Group Finder Function Breakage of '17
+
+Author: Antiarc (Adrine@Cenarion Circle)
+
+Translation Credits
+
+deDE: Sparky
+
+Many thanks to all the early testers and bug reporters!
+]]
         }
       }
     }
