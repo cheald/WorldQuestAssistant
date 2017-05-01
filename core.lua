@@ -76,8 +76,16 @@ end
 function mod:GROUP_ROSTER_UPDATE()
   if self:IsInParty() then
     table.wipe(self.pendingGroups)
-    if UnitIsGroupLeader("player") and not IsInRaid() and mod:IsRaidCompatible(self.activeQuestID) then
-      ConvertToRaid()
+    if self.activeQuestID then
+      if UnitIsGroupLeader("player") then
+        local groupSize = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME)
+        if not IsInRaid() and mod:IsRaidCompatible(self.activeQuestID) and groupSize > 4 then
+          ConvertToRaid()
+        elseif groupSize < 5 and IsInRaid() then
+          ConvertToParty()
+        end
+      end
+      self:TurnOffRaidConvertWarning()
     end
   else
     StaticPopup_Hide("WQA_LEAVE_GROUP")
@@ -244,7 +252,11 @@ function mod:CreateQuestGroup(questID)
   local info = self:GetQuestInfo(questID or self.activeQuestID)
   self.currentQuestInfo = info
   _G.C_LFGList.CreateListing(info.activityID, "", 0, 0, "", "WorldQuestAssistant QID#" .. self.activeQuestID, true, false, info.questID)
-  LFGListFrame.displayedAutoAcceptConvert = true -- turn off the auto-convert to raid warning
+  self:TurnOffRaidConvertWarning()
+end
+
+function mod:TurnOffRaidConvertWarning()
+  LFGListFrame.displayedAutoAcceptConvert = true
 end
 
 function mod:ApplyToGroups()
