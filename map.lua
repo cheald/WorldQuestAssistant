@@ -33,8 +33,11 @@ function mod:IsInSameZone()
 end
 
 function mod:PLAYER_ENTERING_WORLD()
-  self:HookWorldQuestTracker()
-  self:HookBaseUIPOITracker()
+  if not self.hooked then
+    self.hooked = true
+    self:HookWorldQuestTracker()
+    self:HookBaseUIPOITracker()
+  end
 end
 
 function mod:HookBaseUIPOITracker()
