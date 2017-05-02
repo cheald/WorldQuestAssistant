@@ -20,16 +20,14 @@ function mod:OnInitialize()
 
   hooksecurefunc("TaskPOI_OnEnter", function(self)
     if self.worldQuest and WQA:IsEligibleQuest(self.questID, true) and mod:IsInSameZone() then
-      WorldMapTooltip:AddLine(L["Middle-click to find a group for this quest"])
+      WorldMapTooltip:AddLine(L["Middle-click or ctrl-right-click to find a group for this quest"])
       WorldMapTooltip:Show()
     end
   end)
 end
 
 function mod:IsInSameZone()
-  local mapZone = GetMapInfo()
-  local playerZone = GetRealZoneText()
-  return mapZone == playerZone
+  return GetPlayerMapAreaID("player") == GetCurrentMapAreaID()
 end
 
 function mod:PLAYER_ENTERING_WORLD()
@@ -44,11 +42,8 @@ function mod:HookBaseUIPOITracker()
   hooksecurefunc("WorldMap_GetOrCreateTaskPOI", function(i)
     local button = _G["WorldMapFrameTaskPOI" .. i]
     button:RegisterForClicks("LeftButtonUp", "MiddleButtonUp", "RightButtonUp")
-
-    if not self:IsHooked(button, "OnClick") then
-      self:RawHookScript(button, "OnClick", "ClickWQ")
-    end
   end)
+  self:SecureHook("TaskPOI_OnClick", "ClickWQSecure")
 end
 
 function mod:HookWorldQuestTracker()
@@ -56,24 +51,45 @@ function mod:HookWorldQuestTracker()
     self:RawHook(WorldQuestTrackerAddon, "CreateZoneWidget", function(...)
       local button = self.hooks[WorldQuestTrackerAddon].CreateZoneWidget(...)
       if not self:IsHooked(button, "OnClick") then
-        self:RawHookScript(button, "OnClick", "ClickWQ")
+        self:RawHookScript(button, "OnClick", "ClickWQRaw")
       end
       return button
     end)
   end
 end
 
-function mod:ClickWQ(poiButton, mouseButton, ...)
-  if mouseButton == "MiddleButton" and mod:IsInSameZone() then
-    if WQA:IsEligibleQuest(tonumber(poiButton.questID), true) then
-      if WQA.UI:IsActiveMapButton(poiButton) then
+local function wantsGroup(button)
+  return (button == "MiddleButton") or (button == "RightButton" and IsControlKeyDown())
+end
+
+local function handleMapGroupFind(button)
+  if mod:IsInSameZone() then
+    if WQA:IsEligibleQuest(tonumber(button.questID), true) then
+      if WQA.UI:IsActiveMapButton(button) then
         WQA.UI:SetMapButton(nil)
       else
-        WQA:FindQuestGroups(poiButton.questID, true)
-        WQA.UI:SetMapButton(poiButton)
+        WQA:FindQuestGroups(button.questID, true)
+        WQA.UI:SetMapButton(button)
       end
     end
+  end
+end
+
+function mod:ClickWQRaw(poiButton, mouseButton, ...)
+  self:ClickWQSecure(poiButton, mouseButton, ...)
+  if wantsGroup(mouseButton) and mod:IsInSameZone() then
+    handleMapGroupFind(poiButton)
   else
-    return self.hooks[poiButton].OnClick(mouseButton, ...)
+    return self.hooks[poiButton].OnClick(poiButton, mouseButton, ...)
+  end
+end
+
+function mod:ClickWQSecure(poiButton, mouseButton)
+  if wantsGroup(mouseButton) then
+    handleMapGroupFind(poiButton)
+    -- Undo tracking installed on click by the base UI
+    if IsWorldQuestHardWatched(poiButton.questID) or (IsWorldQuestWatched(poiButton.questID) and GetSuperTrackedQuestID() == poiButton.questID) then
+      BonusObjectiveTracker_UntrackWorldQuest(poiButton.questID)
+    end
   end
 end
