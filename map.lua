@@ -42,8 +42,10 @@ function mod:HookBaseUIPOITracker()
   hooksecurefunc("WorldMap_GetOrCreateTaskPOI", function(i)
     local button = _G["WorldMapFrameTaskPOI" .. i]
     button:RegisterForClicks("LeftButtonUp", "MiddleButtonUp", "RightButtonUp")
+    if not self:IsHooked(button, "OnClick") then
+      self:SecureHookScript(button, "OnClick", "ClickWQSecure")
+    end
   end)
-  self:SecureHook("TaskPOI_OnClick", "ClickWQSecure")
 end
 
 function mod:HookWorldQuestTracker()
@@ -77,9 +79,7 @@ end
 
 function mod:ClickWQRaw(poiButton, mouseButton, ...)
   self:ClickWQSecure(poiButton, mouseButton, ...)
-  if wantsGroup(mouseButton) and mod:IsInSameZone() then
-    handleMapGroupFind(poiButton)
-  else
+  if not (wantsGroup(mouseButton) and mod:IsInSameZone()) then
     return self.hooks[poiButton].OnClick(poiButton, mouseButton, ...)
   end
 end
