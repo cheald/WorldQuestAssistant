@@ -54,7 +54,11 @@ local blockAttachments = {}
 local function ReleaseButtonGroup(group)
   if group then
     group:Hide()
+    group:SetScale(1.0)
     group:ClearAllPoints()
+    if group.questID then
+      blockAttachments[group.questID] = nil
+    end
     tinsert(buttonGroups, group)
   end
 end
@@ -78,7 +82,7 @@ local function CreateButtonGroup()
   local SIZE = 25
 
   local function updateLayout(block)
-    local anchor = ObjectiveTrackerFrame:GetLeft() > (UIParent:GetWidth() / 2) and "RIGHT" or "LEFT"
+    local anchor = (block:GetLeft() or 0) > (UIParent:GetWidth() / 2) and "RIGHT" or "LEFT"
     local otherAnchor = anchor == "LEFT" and "RIGHT" or "LEFT"
     local SPACING = anchor == "RIGHT" and -4 or 4
     local OFFSET = anchor == "RIGHT" and -12 or 12
@@ -104,7 +108,7 @@ local function CreateButtonGroup()
   f:SetScript("OnEnter", showTooltip)
   f:SetScript("OnLeave", hideTooltip)
   f:SetScript("OnClick", function()
-    mod:FindQuestGroups(ButtonsFrame.questID)
+    mod:FindQuestGroups(ButtonsFrame.questID, true)
   end)
 
   f = NewGroupFrame
@@ -121,7 +125,7 @@ local function CreateButtonGroup()
   f.SetPendingInvites = function(self)
     self:SetEnabled(#mod.pendingGroups > 0)
     self:SetText(#mod.pendingGroups)
-    if #mod.pendingGroups == 0 or mod.activeQuestID ~= ButtonsFrame.questID then
+    if #mod.pendingGroups == 0 or tostring(mod.activeQuestID) ~= tostring(ButtonsFrame.questID) then
       self:Hide()
     else
       self:Show()
@@ -161,9 +165,11 @@ local function CreateButtonGroup()
   f:Hide()
 
   ButtonsFrame.Attach = function(self, block)
+    self:SetParent(block)
+    _G.LBB = self
     if block and block.id then
-      f.questID = block.id
-      blockAttachments[block.id] = f
+      f.questID = tostring(block.id)
+      blockAttachments[f.questID] = f
       f:Show()
       updateLayout(block)
     else
@@ -214,21 +220,32 @@ function mod.UI:ReleaseBlock(block)
   end
 end
 
+local mapButton = nil
+local preserved = {}
+
+local function updateBlock(block)
+  local strID = tostring(block.id)
+  local group = blockAttachments[strID] or GetButtonGroup()
+  preserved[strID] = true
+  if mod:IsInOtherQueues() then
+    group:Hide()
+  else
+    group:Attach(block)
+    group:Update()
+  end
+  return group
+end
+
 function mod.UI:SetupTrackerBlocks()
-  local preserved = {}
-  mod.UI:GetTrackerBlocks(function(block)
-    local group = blockAttachments[block.id] or GetButtonGroup()
-    preserved[block.id] = true
-    if mod:IsInOtherQueues() then
-      group:Hide()
-    else
-      group:Attach(block)
-      group:Update()
-    end
-  end)
+  table.wipe(preserved)
+  mod.UI:GetTrackerBlocks(updateBlock)
+  if mapButton then
+    local m = updateBlock(mapButton)
+    m:SetScale(0.8)
+  end
 
   for id, block in pairs(blockAttachments) do
-    if not preserved[id] then
+    if not preserved[tostring(id)] then
       blockAttachments[id] = nil
       ReleaseButtonGroup(block)
     end
@@ -243,5 +260,25 @@ function mod.UI:GetTrackerBlocks(callback)
         callback(block)
       end
     end
+  end
+end
+
+function mod.UI:SetMapButton(button)
+  if button then
+    button.id = tostring(button.questID)
+    mapButton = button
+  else
+    mapButton = nil
+  end
+  self:SetupTrackerBlocks()
+end
+
+function mod.UI:IsActiveMapButton(button)
+  return button == mapButton
+end
+
+function mod.UI:ReleaseStaleMapButtons()
+  if mapButton and blockAttachments[tostring(mapButton.questID)] and tostring(mapButton.questID) ~= blockAttachments[tostring(mapButton.questID)].questID then
+    self:SetMapButton(nil)
   end
 end

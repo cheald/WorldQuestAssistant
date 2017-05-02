@@ -5,7 +5,7 @@
 ## Description: Streamlines creation and finding of groups for world quests
 ## Author: Antiarc (Cenarion Circle-US)
 ## SavedVariables: WorldQuestAssistantDB
-## OptionalDependencies: Ace3
+## OptionalDependencies: Ace3, WorldQuestTracker
 
 #@no-lib-strip@
 embeds.xml
@@ -15,6 +15,7 @@ locale\enUS.lua
 locale\deDE.lua
 
 core.lua
+map.lua
 quests.lua
 config.lua
 ui.lua

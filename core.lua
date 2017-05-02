@@ -1,5 +1,5 @@
 local addon, private = ...
-local mod = LibStub("AceAddon-3.0"):NewAddon(addon, "AceConsole-3.0", "AceEvent-3.0")
+local mod = LibStub("AceAddon-3.0"):NewAddon(addon, "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("WorldQuestAssistant")
 local ACD3 = LibStub("AceConfigDialog-3.0")
 local LRI = LibStub("LibRealmInfo")
@@ -49,12 +49,12 @@ function mod:OnInitialize()
   self:RegisterEvent("PLAYER_ENTERING_WORLD")
   self:RegisterEvent("QUEST_ACCEPTED")
   self:RegisterEvent("QUEST_TURNED_IN")
+  self:RegisterEvent("GROUP_ROSTER_UPDATE")
   self:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED", function()
     C_Timer.After(0.25, function()
       mod:ApplyToGroups()
     end)
   end)
-  self:RegisterEvent("GROUP_ROSTER_UPDATE")
 
   hooksecurefunc("ObjectiveTracker_Update", function()
     mod.UI:SetupTrackerBlocks()
@@ -135,8 +135,8 @@ function mod:IsInOtherQueues()
   return false
 end
 
-function mod:IsEligibleQuest(questID)
-  if QuestUtils_IsQuestWorldQuest(questID) and GetQuestLogIndexByID(questID) ~= 0 then
+function mod:IsEligibleQuest(questID, skipLogCheck)
+  if QuestUtils_IsQuestWorldQuest(questID) and (GetQuestLogIndexByID(questID) ~= 0 or skipLogCheck) then
     local info = self:GetQuestInfo(questID)
     if (info.worldQuestType == LE_QUEST_TAG_TYPE_PET_BATTLE and not mod.db.profile.filters.petBattles) or
        (info.worldQuestType == LE_QUEST_TAG_TYPE_PROFESSION and not mod.db.profile.filters.tradeskills) or
@@ -240,17 +240,6 @@ function mod:GetQuestInfo(questID)
   }
 end
 
-local requestedGroupsViaWQA = false
-function mod:FindQuestGroups(questID)
-  StaticPopup_Hide("WQA_FIND_GROUP")
-  StaticPopup_Hide("WQA_NEW_GROUP")
-  table.wipe(self.pendingGroups)
-  self.activeQuestID = questID or self.activeQuestID
-  local info = self:GetQuestInfo(self.activeQuestID)
-  self.currentQuestInfo = info
-  requestedGroupsViaWQA = true
-  C_LFGList.Search(1, info.questName, 0, 4, {})
-end
 
 function mod:CreateQuestGroup(questID)
   StaticPopup_Hide("WQA_FIND_GROUP")
@@ -265,52 +254,70 @@ function mod:TurnOffRaidConvertWarning()
   LFGListFrame.displayedAutoAcceptConvert = true
 end
 
-function mod:ApplyToGroups()
-  local searchCount, searchResults = C_LFGList.GetSearchResults()
-  if not self:GetCurrentWorldQuestID() or not requestedGroupsViaWQA then
-    return
-  end
-  requestedGroupsViaWQA = false
+do
+  local requestedGroupsViaWQA = false
+  local skipWorldQuestCheck = false
 
-  local realmInfo = {}
-  for i, result in ipairs(searchResults) do
-    local id, _, name, description, _, ilvl, _, _, _, _, _, _, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
-    local leader, realm = strsplit("-", author or "Unknown", 2)
-    local canJoin = true
-    if realm then
-      local realmType = select(4, LRI:GetRealmInfo(realm))
-      canJoin = mod.db.profile.joinPVP or not (realmType == "PVP" or realmType == "RPPVP")
-    end
-    if members < self:MaxMembersForQuest() and name == self.currentQuestInfo.questName and canJoin then
-      tinsert(self.pendingGroups, result)
-      realmInfo[result] = {members = members, realm = realm}
-    end
+  function mod:FindQuestGroups(questID, skipWQCheck)
+    StaticPopup_Hide("WQA_FIND_GROUP")
+    StaticPopup_Hide("WQA_NEW_GROUP")
+    table.wipe(self.pendingGroups)
+    self.activeQuestID = questID or self.activeQuestID
+    local info = self:GetQuestInfo(self.activeQuestID)
+    self.currentQuestInfo = info
+    skipWorldQuestCheck = skipWQCheck
+    requestedGroupsViaWQA = true
+    C_LFGList.Search(1, info.questName, 0, 4, {})
   end
 
-  table.sort(self.pendingGroups, function(a, b)
-    if mod.db.profile.preferHome and homeRealms[realmInfo[b].realm] and not homeRealms[realmInfo[a].realm] then
-      return true
+  function mod:ApplyToGroups()
+    local searchCount, searchResults = C_LFGList.GetSearchResults()
+    if not ((skipWorldQuestCheck or self:GetCurrentWorldQuestID()) and requestedGroupsViaWQA) then
+      return
+    end
+    requestedGroupsViaWQA = false
+    skipWorldQuestCheck = false
+
+    local realmInfo = {}
+    for i, result in ipairs(searchResults) do
+      local id, _, name, description, _, ilvl, _, _, _, _, _, _, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
+      local leader, realm = strsplit("-", author or "Unknown", 2)
+      local canJoin = true
+      if realm then
+        local realmType = select(4, LRI:GetRealmInfo(realm))
+        canJoin = mod.db.profile.joinPVP or not (realmType == "PVP" or realmType == "RPPVP")
+      end
+      if members < self:MaxMembersForQuest() and name == self.currentQuestInfo.questName and canJoin then
+        tinsert(self.pendingGroups, result)
+        realmInfo[result] = {members = members, realm = realm}
+      end
+    end
+
+    table.sort(self.pendingGroups, function(a, b)
+      if mod.db.profile.preferHome and homeRealms[realmInfo[b].realm] and not homeRealms[realmInfo[a].realm] then
+        return true
+      else
+        return realmInfo[b].members > realmInfo[a].members
+      end
+    end)
+
+    local binding = GetBindingKey("WQA_AUTOMATE")
+    mod:Print(L["Found %s open groups (%s total). %s"]:format(
+      #self.pendingGroups,
+      #searchResults,
+      #self.pendingGroups > 0 and binding and L["Press %s to join a group."]:format(GetBindingKey("WQA_AUTOMATE")) or ""
+    ))
+
+    if #self.pendingGroups == 0 then
+      if mod.db.profile.usePopups.createGroup and not automation.didAutomatedSearch then
+        StaticPopup_Show("WQA_NEW_GROUP")
+      end
     else
-      return realmInfo[b].members > realmInfo[a].members
+      mod.UI:SetupTrackerBlocks()
     end
-  end)
 
-  local binding = GetBindingKey("WQA_AUTOMATE")
-  mod:Print(L["Found %s open groups (%s total). %s"]:format(
-    #self.pendingGroups,
-    #searchResults,
-    #self.pendingGroups > 0 and binding and L["Press %s to join a group."]:format(GetBindingKey("WQA_AUTOMATE")) or ""
-  ))
-
-  if #self.pendingGroups == 0 then
-    if mod.db.profile.usePopups.createGroup and not automation.didAutomatedSearch then
-      StaticPopup_Show("WQA_NEW_GROUP")
-    end
-  else
-    mod.UI:SetupTrackerBlocks()
+    automation.didAutomatedSearch = false
   end
-
-  automation.didAutomatedSearch = false
 end
 
 function mod:JoinNextGroup(questID)
