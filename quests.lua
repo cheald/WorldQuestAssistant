@@ -35,6 +35,9 @@ mod.QuestDB = {
     [43766] = true,     -- The Magic Of Flight, Highmountain
     [43777] = true,     -- The Magic Of Flight, Suramar
     [43771] = true,     -- The Magic Of Flight, Stormheim
+
+    -- Other
+    [43943] = true,     -- Withered Army Training
   },
   Raid = {   -- Generated with tools/import.rb
     --[[

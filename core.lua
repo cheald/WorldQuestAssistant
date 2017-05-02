@@ -94,9 +94,20 @@ function mod:GROUP_ROSTER_UPDATE()
     end
   else
     mod:ResetAutomation()
+    mod:AbortPartyLeave()
     StaticPopup_Hide("WQA_LEAVE_GROUP")
   end
   self.UI:SetupTrackerBlocks()
+end
+
+function mod:AbortPartyLeave(notice)
+  if mod.leaveTimer then
+    mod.leaveTimer:Cancel()
+    mod.leaveTimer = nil
+    if notice then
+      self:Print(L["Will not automatically leave this group"])
+    end
+  end
 end
 
 function mod:IsInParty()
@@ -187,7 +198,7 @@ function mod:QUEST_TURNED_IN(event, questID, experience, money)
     if mod.db.profile.doneBehavior == "ask" then
       StaticPopup_Show("WQA_LEAVE_GROUP")
     elseif mod.db.profile.doneBehavior == "leave" then
-      C_Timer.After(mod.db.profile.leaveDelay or 0, LeaveParty)
+      mod.leaveTimer = C_Timer.NewTimer(mod.db.profile.leaveDelay or 0, LeaveParty)
       if (mod.db.profile.leaveDelay or 0) > 0 then
         mod:Print(L["Leaving group in %s seconds - grab your loot!"]:format(mod.db.profile.leaveDelay))
       end

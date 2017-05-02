@@ -9,22 +9,45 @@ local options = {
       type = "group",
       order = 50,
       args = {
-        keybinding = {
-          type = "keybinding",
-          name = L["Automation Keybind"],
-          desc = L["Automation Keybind Help"],
-          order = 10,
-          get = function()
-            return GetBindingKey("WQA_AUTOMATE")
-          end,
-          set = function(info, v)
-            local old = GetBindingKey("WQA_AUTOMATE")
-            if old then
-              SetBinding(old)
-            end
-            SetBinding(v, "WQA_AUTOMATE")
-            SaveBindings(GetCurrentBindingSet())
-          end
+        keybindings = {
+          type = "group",
+          name = L["Keybindings"],
+          args = {
+            keybinding = {
+              type = "keybinding",
+              name = L["Automation Keybind"],
+              desc = L["Automation Keybind Help"],
+              order = 10,
+              get = function()
+                return GetBindingKey("WQA_AUTOMATE")
+              end,
+              set = function(info, v)
+                local old = GetBindingKey("WQA_AUTOMATE")
+                if old then
+                  SetBinding(old)
+                end
+                SetBinding(v, "WQA_AUTOMATE")
+                SaveBindings(GetCurrentBindingSet())
+              end
+            },
+            cancelAutoLeaveKeybinding = {
+              type = "keybinding",
+              name = L["Cancel group leave"],
+              desc = L["Cancel group leave help"],
+              order = 11,
+              get = function()
+                return GetBindingKey("WQA_ABORT_PARTY_LEAVE")
+              end,
+              set = function(info, v)
+                local old = GetBindingKey("WQA_ABORT_PARTY_LEAVE")
+                if old then
+                  SetBinding(old)
+                end
+                SetBinding(v, "WQA_ABORT_PARTY_LEAVE")
+                SaveBindings(GetCurrentBindingSet())
+              end
+            },
+          }
         },
         onStart = {
           type = "group",

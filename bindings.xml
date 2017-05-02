@@ -2,4 +2,7 @@
   <Binding name="WQA_AUTOMATE" header="WQAHEAD" category="ADDONS">
     WQA:Automate()
   </Binding>
+  <Binding name="WQA_ABORT_PARTY_LEAVE" header="WQAHEAD" category="ADDONS">
+    WQA:AbortPartyLeave(true)
+  </Binding>
 </Bindings>
