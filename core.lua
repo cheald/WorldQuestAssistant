@@ -50,11 +50,7 @@ function mod:OnInitialize()
   self:RegisterEvent("QUEST_ACCEPTED")
   self:RegisterEvent("QUEST_TURNED_IN")
   self:RegisterEvent("GROUP_ROSTER_UPDATE")
-  self:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED", function()
-    C_Timer.After(0.25, function()
-      mod:ApplyToGroups()
-    end)
-  end)
+  self:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED", "FilterGroups")
 
   hooksecurefunc("ObjectiveTracker_Update", function()
     mod.UI:SetupTrackerBlocks()
@@ -68,6 +64,8 @@ function mod:Config()
 end
 
 function mod:PLAYER_ENTERING_WORLD()
+  local realmType = select(4, LRI:GetRealmInfoByUnit("player"))
+  mod.homeRealmType = (realmType or ""):match("PVP") and "PVP" or "PVE"
   for i, realm in ipairs(GetAutoCompleteRealms()) do
     homeRealms[realm] = true
   end
@@ -192,13 +190,15 @@ function mod:QUEST_TURNED_IN(event, questID, experience, money)
     automation.questComplete = true
 
     if mod.db.profile.alertComplete then
-      local questName = self.currentQuestInfo.questName or self:GetQuestInfo(questID).questName
+      local questName = self.currentQuestInfo and self.currentQuestInfo.questName or self:GetQuestInfo(questID).questName
       SendChatMessage(L["[WQA] Quest '%s' complete!"]:format(questName), IsInRaid() and "RAID" or "PARTY")
     end
     if mod.db.profile.doneBehavior == "ask" then
       StaticPopup_Show("WQA_LEAVE_GROUP")
     elseif mod.db.profile.doneBehavior == "leave" then
-      mod.leaveTimer = C_Timer.NewTimer(mod.db.profile.leaveDelay or 0, LeaveParty)
+      mod.leaveTimer = C_Timer.NewTimer(mod.db.profile.leaveDelay or 0, function()
+        mod:MaybeLeaveParty()
+      end)
       if (mod.db.profile.leaveDelay or 0) > 0 then
         mod:Print(L["Leaving group in %s seconds - grab your loot!"]:format(mod.db.profile.leaveDelay))
       end
@@ -206,6 +206,13 @@ function mod:QUEST_TURNED_IN(event, questID, experience, money)
     table.wipe(self.pendingGroups)
     self.activeQuestID = nil
   end
+end
+
+function mod:MaybeLeaveParty()
+  if IsInInstance() then
+    return
+  end
+  LeaveParty()
 end
 
 function mod:GetCurrentWorldQuestID()
@@ -257,7 +264,7 @@ function mod:CreateQuestGroup(questID)
   StaticPopup_Hide("WQA_NEW_GROUP")
   local info = self:GetQuestInfo(questID or self.activeQuestID)
   self.currentQuestInfo = info
-  _G.C_LFGList.CreateListing(info.activityID, "", 0, 0, "", "WorldQuestAssistant QID#" .. self.activeQuestID, true, false, info.questID)
+  _G.C_LFGList.CreateListing(info.activityID, "", 0, 0, "", string.format("Created by World Quest Assistant #WQ:%s#%s#", self.activeQuestID, self.homeRealmType), true, false, info.questID)
   self:TurnOffRaidConvertWarning()
 end
 
@@ -281,7 +288,7 @@ do
     C_LFGList.Search(1, info.questName, 0, 4, {})
   end
 
-  function mod:ApplyToGroups()
+  function mod:FilterGroups()
     local searchCount, searchResults = C_LFGList.GetSearchResults()
     if not ((skipWorldQuestCheck or self:GetCurrentWorldQuestID()) and requestedGroupsViaWQA) then
       return
@@ -291,21 +298,30 @@ do
 
     local realmInfo = {}
     for i, result in ipairs(searchResults) do
-      local id, _, name, description, _, ilvl, _, _, _, _, _, _, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
+      local id, _, name, description, _, _, _, _, _, _, _, _, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
       local leader, realm = strsplit("-", author or "Unknown", 2)
-      local canJoin = true
-      if realm then
-        local realmType = select(4, LRI:GetRealmInfo(realm))
-        canJoin = mod.db.profile.joinPVP or not (realmType == "PVP" or realmType == "RPPVP")
+      local canJoin = mod.db.profile.joinPVP
+
+      if not canJoin then
+        if self.currentQuestInfo.worldQuestType == LE_QUEST_TAG_TYPE_PVP then
+          canJoin = true
+        elseif realm then
+          local realmType = select(4, LRI:GetRealmInfo(realm))
+          canJoin = not (realmType == "PVP" or realmType == "RPPVP")
+        elseif description:match("#PVE#") then
+          canJoin = true
+        end
       end
       if members < self:MaxMembersForQuest() and name == self.currentQuestInfo.questName and canJoin then
         tinsert(self.pendingGroups, result)
-        realmInfo[result] = {members = members, realm = realm}
+        realmInfo[result] = {members = members, realm = realm, autoinv = false}
       end
     end
 
     table.sort(self.pendingGroups, function(a, b)
       if mod.db.profile.preferHome and homeRealms[realmInfo[b].realm] and not homeRealms[realmInfo[a].realm] then
+        return true
+      elseif realmInfo[b].autoinv and not realmInfo[a].autoinv then
         return true
       else
         return realmInfo[b].members > realmInfo[a].members
@@ -337,6 +353,7 @@ function mod:JoinNextGroup(questID)
   if result then
     local id, activityID, name, comment, voiceChat, iLvl, honorLevel, age, numBNetFriends, numCharFriends, numGuildMates, isDelisted, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
     if members and members < mod:MaxMembersForQuest() and not isDelisted then
+      self:Debug("Applied to", comment, author)
       C_LFGList.ApplyToGroup(result, "WorldQuestAssistantUser-" .. tostring(questID), spec == "TANK", spec == "HEALER", spec == "DAMAGER")
     end
   end
@@ -357,8 +374,8 @@ function mod:Automate()
   elseif LFGListInviteDialog:IsVisible() then
     LFGListInviteDialog.AcceptButton:Click()
   elseif self.activeQuestID and #self.pendingGroups == 0 then
-    local waitedLongEnoughToCreateGroup = GetTime() - automation.lastTime > 2
-    if automation.hasSearched and waitedLongEnoughToCreateGroup then
+    local wantsNewGroup = GetTime() - automation.lastTime < 3
+    if automation.hasSearched and wantsNewGroup then
       self:Print(L["Automate: No groups found, creating a new one"])
       self:CreateQuestGroup(self.activeQuestID)
     else
@@ -372,4 +389,10 @@ function mod:Automate()
   end
   automation.questComplete = false
   automation.lastTime = GetTime()
+end
+
+function mod:Debug(...)
+  if self.debug then
+    self:Print(...)
+  end
 end
