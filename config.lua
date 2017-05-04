@@ -18,6 +18,7 @@ local options = {
               name = L["Automation Keybind"],
               desc = L["Automation Keybind Help"],
               order = 10,
+              width = "double",
               get = function()
                 return GetBindingKey("WQA_AUTOMATE")
               end,
@@ -35,6 +36,7 @@ local options = {
               name = L["Cancel group leave"],
               desc = L["Cancel group leave help"],
               order = 11,
+              width = "double",
               get = function()
                 return GetBindingKey("WQA_ABORT_PARTY_LEAVE")
               end,
@@ -44,6 +46,24 @@ local options = {
                   SetBinding(old)
                 end
                 SetBinding(v, "WQA_ABORT_PARTY_LEAVE")
+                SaveBindings(GetCurrentBindingSet())
+              end
+            },
+            newGroupKeybinding = {
+              type = "keybinding",
+              name = L["Create a new group"],
+              desc = L["Create a new group help"],
+              width = "double",
+              order = 12,
+              get = function()
+                return GetBindingKey("WQA_NEW_PARTY")
+              end,
+              set = function(info, v)
+                local old = GetBindingKey("WQA_NEW_PARTY")
+                if old then
+                  SetBinding(old)
+                end
+                SetBinding(v, "WQA_NEW_PARTY")
                 SaveBindings(GetCurrentBindingSet())
               end
             },

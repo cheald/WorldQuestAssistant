@@ -5,6 +5,7 @@ mod.UI = {}
 BINDING_HEADER_WQAHEAD = L["World Quest Assistant"]
 BINDING_NAME_WQA_AUTOMATE = L["Automate group find/join"]
 BINDING_NAME_WQA_ABORT_PARTY_LEAVE = L["Cancel group leave"]
+BINDING_NAME_WQA_NEW_PARTY = L["Create a new group"]
 
 StaticPopupDialogs["WQA_FIND_GROUP"] = {
   text = L["Do you want to find a group for this quest?"],

@@ -21,6 +21,7 @@ L["Behavior"] = true
 L["Cancel group leave"] = true
 L["Cancel group leave help"] = "Assigns a key that can be used to cancel automatic group leaving after a quest is complete, leaving you in the group until you leave manually."
 L["Create a new group"] = true
+L["Create a new group help"] = "Assigns a key that can be used to create a new group for the active world quest."
 L["Credits"] = true
 L["Do nothing"] = true
 L["Do you want to find a group for '%s'?"] = true

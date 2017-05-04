@@ -64,8 +64,6 @@ function mod:Config()
 end
 
 function mod:PLAYER_ENTERING_WORLD()
-  local realmType = select(4, LRI:GetRealmInfoByUnit("player"))
-  mod.homeRealmType = (realmType or ""):match("PVP") and "PVP" or "PVE"
   for i, realm in ipairs(GetAutoCompleteRealms()) do
     homeRealms[realm] = true
   end
@@ -74,6 +72,14 @@ function mod:PLAYER_ENTERING_WORLD()
   if id then
     self:QUEST_ACCEPTED(nil, nil, id)
   end
+end
+
+function mod:HomeRealmType()
+  if not mod.homeRealmType and UnitGUID("player") then
+    local realmType = select(4, LRI:GetRealmInfoByUnit("player"))
+    mod.homeRealmType = (realmType or ""):match("PVP") and "PVP" or "PVE"
+  end
+  return mod.homeRealmType
 end
 
 function mod:GROUP_ROSTER_UPDATE()
@@ -264,7 +270,7 @@ function mod:CreateQuestGroup(questID)
   StaticPopup_Hide("WQA_NEW_GROUP")
   local info = self:GetQuestInfo(questID or self.activeQuestID)
   self.currentQuestInfo = info
-  _G.C_LFGList.CreateListing(info.activityID, "", 0, 0, "", string.format("Created by World Quest Assistant #WQ:%s#%s#", self.activeQuestID, self.homeRealmType), true, false, info.questID)
+  _G.C_LFGList.CreateListing(info.activityID, "", 0, 0, "", string.format("Created by World Quest Assistant #WQ:%s#%s#", self.activeQuestID, self:HomeRealmType() or "NIL"), true, false, info.questID)
   self:TurnOffRaidConvertWarning()
 end
 
