@@ -6,8 +6,8 @@
     WQA:AbortPartyLeave(true)
   </Binding>
   <Binding name="WQA_NEW_PARTY" header="WQAHEAD" category="ADDONS">
-    if WQA.activeQuestID then
-      WQA:CreateQuestGroup(WQA.activeQuestID)
+    if WQA:GetCurrentWorldQuestID() and not WQA:IsInParty() then
+      WQA:CreateQuestGroup(WQA:GetCurrentWorldQuestID())
     end
   </Binding>
 </Bindings>

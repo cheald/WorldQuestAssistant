@@ -85,6 +85,7 @@ end
 function mod:GROUP_ROSTER_UPDATE()
   if self:IsInParty() then
     table.wipe(self.pendingGroups)
+    self.UI:SetMapButton(nil)
     if self.activeQuestID then
       if UnitIsGroupLeader("player") then
         local groupSize = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME)
@@ -211,6 +212,9 @@ function mod:QUEST_TURNED_IN(event, questID, experience, money)
     end
     table.wipe(self.pendingGroups)
     self.activeQuestID = nil
+    if self:GetCurrentWorldQuestID() then
+      self:QUEST_ACCEPTED(nil, nil, self:GetCurrentWorldQuestID())
+    end
   end
 end
 
@@ -301,6 +305,7 @@ do
     end
     requestedGroupsViaWQA = false
     skipWorldQuestCheck = false
+    automation.gotResults = true
 
     local realmInfo = {}
     for i, result in ipairs(searchResults) do
@@ -381,12 +386,13 @@ function mod:Automate()
     LFGListInviteDialog.AcceptButton:Click()
   elseif self.activeQuestID and #self.pendingGroups == 0 then
     local wantsNewGroup = GetTime() - automation.lastTime < 3
-    if automation.hasSearched and wantsNewGroup then
+    if automation.hasSearched and automation.gotResults and wantsNewGroup then
       self:Print(L["Automate: No groups found, creating a new one"])
       self:CreateQuestGroup(self.activeQuestID)
     else
       automation.didAutomatedSearch = true
       automation.hasSearched = true
+      automation.gotResults = false
       self:FindQuestGroups(self.activeQuestID)
     end
   elseif #self.pendingGroups > 0 then
