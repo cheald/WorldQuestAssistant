@@ -51,16 +51,11 @@ function mod:OnInitialize()
   self:RegisterEvent("QUEST_TURNED_IN")
   self:RegisterEvent("GROUP_ROSTER_UPDATE")
   self:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED", "FilterGroups")
+  self:RegisterEvent("UNIT_AURA")
 
   hooksecurefunc("ObjectiveTracker_Update", function()
     mod.UI:SetupTrackerBlocks()
   end)
-end
-
-function mod:Config()
-  InterfaceOptionsFrame:Hide()
-	ACD3:SetDefaultSize("WorldQuestAssistant", 680, 550)
-	ACD3:Open("WorldQuestAssistant")
 end
 
 function mod:PLAYER_ENTERING_WORLD()
@@ -74,12 +69,15 @@ function mod:PLAYER_ENTERING_WORLD()
   end
 end
 
-function mod:HomeRealmType()
-  if not mod.homeRealmType and UnitGUID("player") then
-    local realmType = select(4, LRI:GetRealmInfoByUnit("player"))
-    mod.homeRealmType = (realmType or ""):match("PVP") and "PVP" or "PVE"
+function mod:UNIT_AURA()
+  if self.awaitingFlying then
+    if IsFlying() then
+      mod.leaveTimer = C_Timer.NewTimer(0.25, function()
+        self.awaitingFlying = false
+        self:MaybeLeaveParty()
+      end)
+    end
   end
-  return mod.homeRealmType
 end
 
 function mod:GROUP_ROSTER_UPDATE()
@@ -98,25 +96,12 @@ function mod:GROUP_ROSTER_UPDATE()
       self:TurnOffRaidConvertWarning()
     end
   else
+    self.awaitingFlying = false
     mod:ResetAutomation()
     mod:AbortPartyLeave()
     StaticPopup_Hide("WQA_LEAVE_GROUP")
   end
   self.UI:SetupTrackerBlocks()
-end
-
-function mod:AbortPartyLeave(notice)
-  if mod.leaveTimer then
-    mod.leaveTimer:Cancel()
-    mod.leaveTimer = nil
-    if notice then
-      self:Print(L["Will not automatically leave this group"])
-    end
-  end
-end
-
-function mod:IsInParty()
-  return GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0
 end
 
 function mod:QUEST_ACCEPTED(event, index, questID)
@@ -139,6 +124,63 @@ function mod:QUEST_ACCEPTED(event, index, questID)
       end
     end
   end
+end
+
+function mod:QUEST_TURNED_IN(event, questID, experience, money)
+  if QuestUtils_IsQuestWorldQuest(questID) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0 then
+    automation.questComplete = true
+
+    if mod.db.profile.alertComplete then
+      local questName = self.currentQuestInfo and self.currentQuestInfo.questName or self:GetQuestInfo(questID).questName
+      SendChatMessage(L["[WQA] Quest '%s' complete!"]:format(questName), IsInRaid() and "RAID" or "PARTY")
+    end
+    if mod.db.profile.doneBehavior == "ask" then
+      StaticPopup_Show("WQA_LEAVE_GROUP")
+    elseif mod.db.profile.doneBehavior == "leave" then
+      mod.leaveTimer = C_Timer.NewTimer(mod.db.profile.leaveDelay or 0, function()
+        mod:MaybeLeaveParty()
+      end)
+      if (mod.db.profile.leaveDelay or 0) > 0 then
+        mod:Print(L["Leaving group in %s seconds - grab your loot!"]:format(mod.db.profile.leaveDelay))
+      end
+    elseif mod.db.profile.doneBehavior == "leaveWhenFlying" then
+      self.awaitingFlying = true
+      self:UNIT_AURA()
+    end
+    table.wipe(self.pendingGroups)
+    self.activeQuestID = nil
+    if self:GetCurrentWorldQuestID() then
+      self:QUEST_ACCEPTED(nil, nil, self:GetCurrentWorldQuestID())
+    end
+  end
+end
+
+function mod:Config()
+  InterfaceOptionsFrame:Hide()
+	ACD3:SetDefaultSize("WorldQuestAssistant", 680, 550)
+	ACD3:Open("WorldQuestAssistant")
+end
+
+function mod:HomeRealmType()
+  if not mod.homeRealmType and UnitGUID("player") then
+    local realmType = select(4, LRI:GetRealmInfoByUnit("player"))
+    mod.homeRealmType = (realmType or ""):match("PVP") and "PVP" or "PVE"
+  end
+  return mod.homeRealmType
+end
+
+function mod:AbortPartyLeave(notice)
+  if mod.leaveTimer then
+    mod.leaveTimer:Cancel()
+    mod.leaveTimer = nil
+    if notice then
+      self:Print(L["Will not automatically leave this group"])
+    end
+  end
+end
+
+function mod:IsInParty()
+  return GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0
 end
 
 function mod:IsInOtherQueues()
@@ -192,37 +234,12 @@ function mod:MaxMembersForQuest()
   end
 end
 
-function mod:QUEST_TURNED_IN(event, questID, experience, money)
-  if QuestUtils_IsQuestWorldQuest(questID) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0 then
-    automation.questComplete = true
-
-    if mod.db.profile.alertComplete then
-      local questName = self.currentQuestInfo and self.currentQuestInfo.questName or self:GetQuestInfo(questID).questName
-      SendChatMessage(L["[WQA] Quest '%s' complete!"]:format(questName), IsInRaid() and "RAID" or "PARTY")
-    end
-    if mod.db.profile.doneBehavior == "ask" then
-      StaticPopup_Show("WQA_LEAVE_GROUP")
-    elseif mod.db.profile.doneBehavior == "leave" then
-      mod.leaveTimer = C_Timer.NewTimer(mod.db.profile.leaveDelay or 0, function()
-        mod:MaybeLeaveParty()
-      end)
-      if (mod.db.profile.leaveDelay or 0) > 0 then
-        mod:Print(L["Leaving group in %s seconds - grab your loot!"]:format(mod.db.profile.leaveDelay))
-      end
-    end
-    table.wipe(self.pendingGroups)
-    self.activeQuestID = nil
-    if self:GetCurrentWorldQuestID() then
-      self:QUEST_ACCEPTED(nil, nil, self:GetCurrentWorldQuestID())
-    end
-  end
-end
-
 function mod:MaybeLeaveParty()
   if IsInInstance() then
     return
+  elseif self:IsInParty() then
+    LeaveParty()
   end
-  LeaveParty()
 end
 
 function mod:GetCurrentWorldQuestID()

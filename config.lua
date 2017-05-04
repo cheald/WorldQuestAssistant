@@ -137,6 +137,7 @@ local options = {
               values = {
                 ask = L["Ask to leave the group"],
                 leave = L["Automatically leave the group"],
+                leaveWhenFlying = L["Automatically leave once you're flying"],
                 none = L["Do nothing"]
               },
               order = 105,
