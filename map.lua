@@ -8,8 +8,8 @@ function mod:OnInitialize()
 
   self:RegisterEvent("PLAYER_ENTERING_WORLD")
   self:RegisterEvent("WORLD_MAP_UPDATE", function()
-    if GetCurrentMapAreaID() ~= lastWorldMapID then
-      WQA.UI:ReleaseStaleMapButtons()
+    if GetCurrentMapAreaID() ~= lastWorldMapID or not WorldMapFrame:IsVisible() then
+      WQA.UI:SetMapButton(nil)
     end
     lastWorldMapID = GetCurrentMapAreaID()
   end)
