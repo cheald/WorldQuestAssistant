@@ -379,7 +379,7 @@ do
       elseif bi.autoinv and not ai.autoinv then
         return true
       elseif bi.members == ai.members then
-        return bi.isPVE and not a.isPVE
+        return bi.isPVE and not ai.isPVE
       else
         return bi.members > ai.members
       end
