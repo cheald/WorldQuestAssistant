@@ -13,6 +13,8 @@ local automation = {
   questComplete = false
 }
 local homeRealms = {}
+local appliedToWQAGroup = false
+local isWQAGroup = false
 
 function mod:OnInitialize()
   self.pendingGroups = {}
@@ -52,10 +54,21 @@ function mod:OnInitialize()
   self:RegisterEvent("GROUP_ROSTER_UPDATE")
   self:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED", "FilterGroups")
   self:RegisterEvent("UNIT_AURA")
+  self:RegisterEvent("LFG_LIST_JOINED_GROUP")
 
   hooksecurefunc("ObjectiveTracker_Update", function()
     mod.UI:SetupTrackerBlocks()
   end)
+end
+
+function mod:LFG_LIST_JOINED_GROUP(...)
+  if appliedToWQAGroup then
+    isWQAGroup = true
+    appliedToWQAGroup = false
+    if LFGListInviteDialog.AcknowledgeButton:IsVisible() then
+      LFGListInviteDialog.AcknowledgeButton:Click()
+    end
+  end
 end
 
 function mod:PLAYER_ENTERING_WORLD()
@@ -97,6 +110,7 @@ function mod:GROUP_ROSTER_UPDATE()
     end
   else
     self.awaitingFlying = false
+    isWQAGroup = false
     mod:ResetAutomation()
     mod:AbortPartyLeave()
     StaticPopup_Hide("WQA_LEAVE_GROUP")
@@ -131,23 +145,26 @@ function mod:QUEST_TURNED_IN(event, questID, experience, money)
   if QuestUtils_IsQuestWorldQuest(questID) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0 then
     automation.questComplete = true
 
-    if mod.db.profile.alertComplete then
-      local questName = self.currentQuestInfo and self.currentQuestInfo.questName or self:GetQuestInfo(questID).questName
-      SendChatMessage(L["[WQA] Quest '%s' complete!"]:format(questName), IsInRaid() and "RAID" or "PARTY")
-    end
-    if mod.db.profile.doneBehavior == "ask" then
-      StaticPopup_Show("WQA_LEAVE_GROUP")
-    elseif mod.db.profile.doneBehavior == "leave" then
-      mod.leaveTimer = C_Timer.NewTimer(mod.db.profile.leaveDelay or 0, function()
-        mod:MaybeLeaveParty()
-      end)
-      if (mod.db.profile.leaveDelay or 0) > 0 then
-        mod:Print(L["Leaving group in %s seconds - grab your loot!"]:format(mod.db.profile.leaveDelay))
+    if isWQAGroup then
+      if self.db.profile.alertComplete then
+        local questName = self.currentQuestInfo and self.currentQuestInfo.questName or self:GetQuestInfo(questID).questName
+        SendChatMessage(L["[WQA] Quest '%s' complete!"]:format(questName), IsInRaid() and "RAID" or "PARTY")
       end
-    elseif mod.db.profile.doneBehavior == "leaveWhenFlying" then
-      self.awaitingFlying = true
-      self:UNIT_AURA()
+      if self.db.profile.doneBehavior == "ask" then
+        StaticPopup_Show("WQA_LEAVE_GROUP")
+      elseif self.db.profile.doneBehavior == "leave" then
+        self.leaveTimer = C_Timer.NewTimer(self.db.profile.leaveDelay or 0, function()
+          self:MaybeLeaveParty()
+        end)
+        if (self.db.profile.leaveDelay or 0) > 0 then
+          self:Print(L["Leaving group in %s seconds - grab your loot!"]:format(self.db.profile.leaveDelay))
+        end
+      elseif self.db.profile.doneBehavior == "leaveWhenFlying" then
+        self.awaitingFlying = true
+        self:UNIT_AURA()
+      end
     end
+
     table.wipe(self.pendingGroups)
     self.activeQuestID = nil
     if self:GetCurrentWorldQuestID() then
@@ -297,6 +314,7 @@ function mod:CreateQuestGroup(questID)
   local info = self:GetQuestInfo(questID or self.activeQuestID)
   self.currentQuestInfo = info
   _G.C_LFGList.CreateListing(info.activityID, "", 0, 0, "", string.format("Created by World Quest Assistant #WQ:%s#%s#", self.activeQuestID, self:HomeRealmType() or "NIL"), true, false, info.questID)
+  isWQAGroup = true
   self:TurnOffRaidConvertWarning()
 end
 
@@ -328,6 +346,7 @@ do
     requestedGroupsViaWQA = false
     skipWorldQuestCheck = false
     automation.gotResults = true
+    appliedToWQAGroup = false
 
     local realmInfo = {}
     for i, result in ipairs(searchResults) do
@@ -387,6 +406,7 @@ function mod:JoinNextGroup(questID)
     local id, activityID, name, comment, voiceChat, iLvl, honorLevel, age, numBNetFriends, numCharFriends, numGuildMates, isDelisted, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
     if members and members < mod:MaxMembersForQuest() and not isDelisted then
       self:Debug("Applied to", comment, author)
+      appliedToWQAGroup = true
       C_LFGList.ApplyToGroup(result, "WorldQuestAssistantUser-" .. tostring(questID), spec == "TANK", spec == "HEALER", spec == "DAMAGER")
     end
   end
