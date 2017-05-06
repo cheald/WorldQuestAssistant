@@ -107,6 +107,7 @@ end
 function mod:QUEST_ACCEPTED(event, index, questID)
   if self:IsEligibleQuest(questID) then
     self.activeQuestID = questID
+    table.wipe(self.pendingGroups)
     self:ResetAutomation()
     C_Timer.After(3, function()
       self.UI:SetupTrackerBlocks()
@@ -194,6 +195,10 @@ function mod:IsInOtherQueues()
 end
 
 function mod:IsEligibleQuest(questID, skipLogCheck)
+  if IsInInstance() then
+    return false
+  end
+
   if QuestUtils_IsQuestWorldQuest(questID) and (GetQuestLogIndexByID(questID) ~= 0 or skipLogCheck) then
     local info = self:GetQuestInfo(questID)
     if (info.worldQuestType == LE_QUEST_TAG_TYPE_PET_BATTLE and not mod.db.profile.filters.petBattles) or
