@@ -136,7 +136,7 @@ local options = {
               type = "select",
               values = {
                 ask = L["Ask to leave the group"],
-                leave = L["Automatically leave the group"],
+                leave = L["Automatically leave after a delay"],
                 leaveWhenFlying = L["Automatically leave once you're flying"],
                 none = L["Do nothing"]
               },
@@ -163,7 +163,7 @@ local options = {
               set = function(info, v)
                 mod.db.profile.leaveDelay = v
               end,
-              disabled = function()
+              hidden = function()
                 return mod.db.profile.doneBehavior ~= "leave"
               end
             },
