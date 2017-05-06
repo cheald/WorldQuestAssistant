@@ -353,6 +353,7 @@ do
       local id, _, name, description, _, _, _, _, _, _, _, _, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
       local leader, realm = strsplit("-", author or "Unknown", 2)
       local canJoin = mod.db.profile.joinPVP
+      local isPVE = realm and not select(4, LRI:GetRealmInfo(realm)):match("PVP") or description:match("#PVE#")
 
       if not canJoin then
         if self.currentQuestInfo.worldQuestType == LE_QUEST_TAG_TYPE_PVP then
@@ -366,17 +367,21 @@ do
       end
       if members < self:MaxMembersForQuest() and name == self.currentQuestInfo.questName and canJoin then
         tinsert(self.pendingGroups, result)
-        realmInfo[result] = {members = members, realm = realm, autoinv = false}
+        realmInfo[result] = {members = members, realm = realm, autoinv = false, isPVE = isPVE}
       end
     end
 
     table.sort(self.pendingGroups, function(a, b)
-      if mod.db.profile.preferHome and homeRealms[realmInfo[b].realm] and not homeRealms[realmInfo[a].realm] then
+      local ai = realmInfo[a]
+      local bi = realmInfo[b]
+      if mod.db.profile.preferHome and homeRealms[bi.realm] and not homeRealms[ai.realm] then
         return true
-      elseif realmInfo[b].autoinv and not realmInfo[a].autoinv then
+      elseif bi.autoinv and not ai.autoinv then
         return true
+      elseif bi.members == ai.members then
+        return bi.isPVE and not a.isPVE
       else
-        return realmInfo[b].members > realmInfo[a].members
+        return bi.members > ai.members
       end
     end)
 
