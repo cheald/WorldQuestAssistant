@@ -354,14 +354,14 @@ do
       local id, _, name, description, _, _, _, _, _, _, _, _, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
       local leader, realm = strsplit("-", author or "Unknown", 2)
       local canJoin = mod.db.profile.joinPVP
-      local isPVE = realm and not select(4, LRI:GetRealmInfo(realm)):match("PVP") or description:match("#PVE#")
+      local realmType = realm and select(4, LRI:GetRealmInfo(realm)) or ""
+      local isPVE = realmType:match("PVP") or description:match("#PVE#")
 
       if not canJoin then
         if self.currentQuestInfo.worldQuestType == LE_QUEST_TAG_TYPE_PVP then
           canJoin = true
-        elseif realm then
-          local realmType = select(4, LRI:GetRealmInfo(realm))
-          canJoin = not (realmType == "PVP" or realmType == "RPPVP")
+        elseif realmType then
+          canJoin = not realmType:match("PVP")
         elseif description:match("#PVE#") then
           canJoin = true
         end
