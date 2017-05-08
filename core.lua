@@ -98,7 +98,7 @@ function mod:GROUP_ROSTER_UPDATE()
   if self:IsInParty() then
     table.wipe(self.pendingGroups)
     self.UI:SetMapButton(nil)
-    if self.activeQuestID then
+    if self.activeQuestID and isWQAGroup then
       if UnitIsGroupLeader("player") then
         local groupSize = GetNumGroupMembers(LE_PARTY_CATEGORY_HOME)
         if not IsInRaid() and mod:IsRaidCompatible(self.activeQuestID) and groupSize > 4 then
