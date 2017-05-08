@@ -382,7 +382,20 @@ do
       elseif bi.members == ai.members then
         return bi.isPVE and not ai.isPVE
       else
-        return bi.members > ai.members
+        if mod:IsRaidCompatible(self.activeQuestID) then
+          return math.abs(25 - bi.members) < math.abs(25 - ai.members)
+        else
+          -- prefer group sizes of: 3, 4, 2, 1
+          -- 4-member groups seem to be closer to finishing the quests; leaving an extra slot behind the user
+          -- allows for a smooth transition where the member is not the last person left finishing the quest
+          if (bi.members == 3 and ai.members ~= 3) or
+             (bi.members == 4 and ai.members ~= 4) or
+             (bi.members == 2 and ai.members ~= 2) then
+            return true
+          else
+            return bi.members > ai.members
+          end
+        end
       end
     end)
 
