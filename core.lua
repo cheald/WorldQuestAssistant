@@ -32,6 +32,7 @@ function mod:OnInitialize()
       joinPVP = true,
       preferHome = true,
       showUI = true,
+      permitGroupQueueing = false,
       filters = {
         petBattles = false,
         tradeskills = false,
@@ -177,7 +178,8 @@ function mod:QUEST_ACCEPTED(event, index, questID)
     C_Timer.After(3, function()
       self.UI:SetupTrackerBlocks()
     end)
-    if not mod:IsInParty() and not mod:IsInOtherQueues() then
+    local isEligibleParty = not mod:IsInParty() or (self.db.profile.permitGroupQueueing and UnitIsGroupLeader("player"))
+    if isEligibleParty and not mod:IsInOtherQueues() then
       local info = self:GetQuestInfo(questID)
       if mod.db.profile.usePopups.joinGroup then
         C_Timer.After(1.5, function()

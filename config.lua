@@ -187,6 +187,15 @@ local options = {
           order = 60,
           name = L["Advanced"],
           args = {
+            allowGroupingInGroups = {
+              type = "toggle",
+              name = L["Allow group queueing"],
+              desc = L["Allow group queueing help"],
+              get = function() return mod.db.profile.permitGroupQueueing end,
+              set = function(info, v)
+                mod.db.profile.permitGroupQueueing = v
+              end,
+            },
             showQuestLogButtons = {
               type = "toggle",
               name = L["Show tracker buttons"],

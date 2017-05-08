@@ -66,3 +66,5 @@ L["When a quest is complete"] = true
 L["Will not automatically leave this group"] = true
 L["World Quest Assistant"] = true
 L["Yes"] = true
+L["Allow group queueing"] = true
+L["Allow group queueing help"] = "Permit WQA to search for and join a world quest group even if you're already in a party. Most people won't want this, but it may be useful if you like to do world quests with a friend."
