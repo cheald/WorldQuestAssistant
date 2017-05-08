@@ -40,7 +40,7 @@ function mod:OnInitialize()
       }
     }
   }
-	self.db = LibStub("AceDB-3.0"):New("WorldQuestAssistantDB", defaults)
+	self.db = LibStub("AceDB-3.0"):New("WorldQuestAssistantDB", defaults, "Default")
 	self.options.args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
 	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("WorldQuestAssistant", self.options)
 
