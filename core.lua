@@ -54,6 +54,8 @@ function mod:OnInitialize()
   self:RegisterEvent("QUEST_TURNED_IN")
   self:RegisterEvent("GROUP_ROSTER_UPDATE")
   self:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED", "FilterGroups")
+  self:RegisterEvent("LFG_LIST_APPLICATION_STATUS_UPDATED")
+  self:RegisterEvent("LFG_LIST_SEARCH_RESULT_UPDATED")
   self:RegisterEvent("UNIT_AURA")
   self:RegisterEvent("LFG_LIST_JOINED_GROUP")
 
@@ -62,8 +64,56 @@ function mod:OnInitialize()
   end)
 end
 
+local lastInvitedGroupResultID = nil
+local recentGroupsCache = {}
+
+local function getGroupIdentifier(resultID)
+  if resultID then
+    local id, activityID, name, comment, voiceChat, iLvl, honorLevel, age, numBNetFriends, numCharFriends, numGuildMates, isDelisted, author, members, autoinv = C_LFGList.GetSearchResultInfo(resultID)
+    return ("%s:%s:%s:%s"):format(tostring(activityID), tostring(name), tostring(comment), tostring(author))
+  end
+end
+
+local function isRecentGroup(resultID)
+  local key = getGroupIdentifier(resultID)
+  if not key then return false end
+  for _, entry in ipairs(recentGroupsCache) do
+    if entry.key == key then
+      return true
+    end
+  end
+  return false
+end
+
+local function addRecentGroup(resultID)
+  local key = getGroupIdentifier(resultID)
+  if not key then return end
+  if not isRecentGroup(resultID) then
+    tinsert(recentGroupsCache, {id = resultID, key = key})
+    if #recentGroupsCache > 10 then
+      table.remove(recentGroupsCache, 1)
+    end
+  end
+end
+
+function mod:LFG_LIST_SEARCH_RESULT_UPDATED(event, result)
+  for _, entry in ipairs(recentGroupsCache) do
+    if entry.id == result then
+      entry.key = getGroupIdentifier(result)
+    end
+  end
+end
+
+function mod:LFG_LIST_APPLICATION_STATUS_UPDATED(event, resultID, status, previousStatus)
+  if status == "invited" then
+    lastInvitedGroupResultID = resultID
+  end
+end
+
 function mod:LFG_LIST_JOINED_GROUP(...)
   if appliedToWQAGroup then
+    addRecentGroup(lastInvitedGroupResultID)
+    lastInvitedGroupResultID = nil
     isWQAGroup = true
     appliedToWQAGroup = false
     if LFGListInviteDialog.AcknowledgeButton:IsVisible() then
@@ -308,7 +358,6 @@ function mod:GetQuestInfo(questID)
   }
 end
 
-
 function mod:CreateQuestGroup(questID)
   StaticPopup_Hide("WQA_FIND_GROUP")
   StaticPopup_Hide("WQA_NEW_GROUP")
@@ -366,9 +415,12 @@ do
           canJoin = true
         end
       end
-      if members < self:MaxMembersForQuest() and name == self.currentQuestInfo.questName and canJoin then
+      local isRecent = isRecentGroup(result)
+      if members < self:MaxMembersForQuest() and name == self.currentQuestInfo.questName and canJoin and not isRecent then
         tinsert(self.pendingGroups, result)
         realmInfo[result] = {members = members, realm = realm, autoinv = false, isPVE = isPVE}
+      elseif isRecent then
+        mod:Debug(("Skipping group %s because it's in the recent cache"):format(getGroupIdentifier(result)))
       end
     end
 
@@ -420,15 +472,23 @@ do
   end
 end
 
+function canJoinGroup(result)
+  local id, activityID, name, comment, voiceChat, iLvl, honorLevel, age, numBNetFriends, numCharFriends, numGuildMates, isDelisted, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
+  return members and members < mod:MaxMembersForQuest() and not isDelisted
+end
+
 function mod:JoinNextGroup(questID)
   local spec = GetSpecializationRole(GetSpecialization())
-  local result = tremove(mod.pendingGroups)
-  if result then
-    local id, activityID, name, comment, voiceChat, iLvl, honorLevel, age, numBNetFriends, numCharFriends, numGuildMates, isDelisted, author, members, autoinv = C_LFGList.GetSearchResultInfo(result)
-    if members and members < mod:MaxMembersForQuest() and not isDelisted then
-      self:Debug("Applied to", comment, author)
-      appliedToWQAGroup = true
-      C_LFGList.ApplyToGroup(result, "WorldQuestAssistantUser-" .. tostring(questID), spec == "TANK", spec == "HEALER", spec == "DAMAGER")
+  while #mod.pendingGroups > 0 do
+    local result = tremove(mod.pendingGroups)
+    if result then
+      if not isRecentGroup(result) and canJoinGroup(result) then
+        appliedToWQAGroup = true
+        C_LFGList.ApplyToGroup(result, "WorldQuestAssistantUser-" .. tostring(questID), spec == "TANK", spec == "HEALER", spec == "DAMAGER")
+        break
+      end
+    else
+      break
     end
   end
   mod.UI:SetupTrackerBlocks()
