@@ -237,6 +237,10 @@ local function updateBlock(block)
   return group
 end
 
+function mod.UI:Blocks()
+  return blockAttachments
+end
+
 function mod.UI:SetupTrackerBlocks()
   table.wipe(preserved)
   if mod.db.profile.showUI then

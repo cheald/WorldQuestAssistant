@@ -15,7 +15,8 @@ locale\enUS.lua
 locale\deDE.lua
 
 core.lua
-map.lua
+modules\map.lua
+modules\kaliels_tracker.lua
 quests.lua
 config.lua
 ui.lua
