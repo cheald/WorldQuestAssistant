@@ -36,6 +36,12 @@ mod.QuestDB = {
     [43777] = true,     -- The Magic Of Flight, Suramar
     [43771] = true,     -- The Magic Of Flight, Stormheim
 
+    [45069] = true,     -- Barrels 'o Fun, Azsuna
+    [45070] = true,     -- Barrels 'o Fun, Val'sharah
+    [45071] = true,     -- Barrels 'o Fun, Highmountain
+    [45068] = true,     -- Barrels 'o Fun, Suramar
+    [45072] = true,     -- Barrels 'o Fun, Stormheim
+
     -- Other
     [43943] = true,     -- Withered Army Training
   },
