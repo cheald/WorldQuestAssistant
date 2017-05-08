@@ -375,7 +375,9 @@ do
     table.sort(self.pendingGroups, function(a, b)
       local ai = realmInfo[a]
       local bi = realmInfo[b]
-      if mod.db.profile.preferHome and homeRealms[bi.realm] and not homeRealms[ai.realm] then
+      if not ai or not bi then
+        return false
+      elseif mod.db.profile.preferHome and homeRealms[bi.realm] and not homeRealms[ai.realm] then
         return true
       elseif bi.autoinv and not ai.autoinv then
         return true
