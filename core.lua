@@ -427,7 +427,7 @@ end
 function mod:Automate()
   if mod:IsInParty() then
     if automation.questComplete then
-      LeaveParty()
+      mod:MaybeLeaveParty()
     end
   elseif LFGListInviteDialog:IsVisible() then
     LFGListInviteDialog.AcceptButton:Click()
