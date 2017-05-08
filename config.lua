@@ -181,6 +181,24 @@ local options = {
             }
           }
         },
+        advanced = {
+          type = "group",
+          inline = true,
+          order = 60,
+          name = L["Advanced"],
+          args = {
+            showQuestLogButtons = {
+              type = "toggle",
+              name = L["Show tracker buttons"],
+              desc = L["Show tracker buttons help"],
+              get = function() return mod.db.profile.showUI end,
+              set = function(info, v)
+                mod.db.profile.showUI = v
+                mod.UI:SetupTrackerBlocks()
+              end,
+            }
+          },
+        },
         filters = {
           type = "group",
           name = L["Quest Filters"],

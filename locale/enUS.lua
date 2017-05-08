@@ -2,6 +2,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("WorldQuestAssistant", "enUS", true
 
 L["[WQA] Quest '%s' complete!"] = true
 
+L["Advanced"] = true
 L["Alert party when quest is complete - Description"] = "After a quest is complete, WQA can send a friendly message to chat letting your group members know why you're about to leave the group."
 L["Alert party when quest is complete"] = true
 L["Apply to groups for this quest"] = true
@@ -14,8 +15,8 @@ L["Automate group find/join"] = true
 L["Automate: Finding groups"] = true
 L["Automate: Joining next group"] = true
 L["Automate: No groups found, creating a new one"] = true
-L["Automatically leave once you're flying"] = true
 L["Automatically leave after a delay"] = true
+L["Automatically leave once you're flying"] = true
 L["Automation Keybind Help"] = "Assigns a key that can be used to find groups, apply for groups, create a new group, and accept group invites."
 L["Automation Keybind"] = true
 L["Behavior"] = true
@@ -56,6 +57,8 @@ L["PVP Filter Description"] = "Join groups for PVP world quests"
 L["PVP Quests"] = true
 L["Quest Filters"] = true
 L["Seconds to wait before automatically leaving the group"] = true
+L["Show tracker buttons help"] = "Show the find group/new group/join group buttons next to quests in the objective tracker. If disabled, you will have no WQA UI elements, only keybindings."
+L["Show tracker buttons"] = true
 L["Starting Quests"] = true
 L["Tradeskill Quests"] = true
 L["Tradeskills Filter Description"] = "Join groups for tradeskill world quests"

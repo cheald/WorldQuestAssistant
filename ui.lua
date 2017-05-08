@@ -168,7 +168,6 @@ local function CreateButtonGroup()
 
   ButtonsFrame.Attach = function(self, block)
     self:SetParent(block)
-    _G.LBB = self
     if block and block.id then
       f.questID = tostring(block.id)
       blockAttachments[f.questID] = f
@@ -240,7 +239,9 @@ end
 
 function mod.UI:SetupTrackerBlocks()
   table.wipe(preserved)
-  mod.UI:GetTrackerBlocks(updateBlock)
+  if mod.db.profile.showUI then
+    mod.UI:GetTrackerBlocks(updateBlock)
+  end
   if mapButton then
     local m = updateBlock(mapButton)
     m:SetScale(0.8)

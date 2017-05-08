@@ -31,6 +31,7 @@ function mod:OnInitialize()
       alertComplete = true,
       joinPVP = true,
       preferHome = true,
+      showUI = true,
       filters = {
         petBattles = false,
         tradeskills = false,
