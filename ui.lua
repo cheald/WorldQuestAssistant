@@ -1,6 +1,8 @@
 local mod = _G.WQA
 local L = LibStub("AceLocale-3.0"):GetLocale("WorldQuestAssistant")
-mod.UI = {}
+mod.UI = {
+  BUTTON_SIZE = 25
+}
 
 BINDING_HEADER_WQAHEAD = L["World Quest Assistant"]
 BINDING_NAME_WQA_AUTOMATE = L["Automate group find/join"]
@@ -75,13 +77,26 @@ local function hideTooltip(self)
   GameTooltip:Hide()
 end
 
+mod.UI.showTooltip = showTooltip
+mod.UI.hideTooltip = hideTooltip
+
 local function CreateButtonGroup()
   local ButtonsFrame = CreateFrame("Frame", nil, UIParent)
   local ApplyFrame = CreateFrame("Button", nil, ButtonsFrame, "UIPanelButtonTemplate")
   local SearchFrame = CreateFrame("Button", nil, ButtonsFrame, "UIPanelButtonTemplate")
   local NewGroupFrame = CreateFrame("Button", nil, ButtonsFrame, "UIPanelButtonTemplate")
   local LeavePartyFrame = CreateFrame("Button", nil, ButtonsFrame, "UIPanelCloseButton")
-  local SIZE = 25
+
+  local SIZE = mod.UI.BUTTON_SIZE
+  ButtonsFrame.ApplyFrame = ApplyFrame
+  ButtonsFrame.SearchFrame = SearchFrame
+  ButtonsFrame.SearchFrame = SearchFrame
+  ButtonsFrame.NewGroupFrame = NewGroupFrame
+  ButtonsFrame.LeavePartyFrame = LeavePartyFrame
+  ButtonsFrame.getAnchor = function(self)
+    local anchor = (self:GetLeft() or 0) > (UIParent:GetWidth() / 2) and "RIGHT" or "LEFT"
+    return anchor, anchor == "RIGHT" and "LEFT" or "RIGHT"
+  end
 
   local function updateLayout(block)
     local anchor = (block:GetLeft() or 0) > (UIParent:GetWidth() / 2) and "RIGHT" or "LEFT"
@@ -150,8 +165,6 @@ local function CreateButtonGroup()
 	f.glow:SetPoint("BOTTOMRIGHT", ApplyFrame, "BOTTOMRIGHT", frameWidth * 0.2, -frameHeight * 0.2);
   f.glow.animIn:Play()
 
-  _G.app = f
-
   f = LeavePartyFrame
   f:Hide()
   f:SetSize(30, 30)
@@ -200,6 +213,14 @@ local function GetButtonGroup()
     return tremove(buttonGroups)
   else
     return CreateButtonGroup()
+  end
+end
+
+function mod.UI:GetActiveQuestBlock()
+  if WQA.activeQuestID then
+    return blockAttachments[tostring(WQA.activeQuestID)]
+  else
+    return nil
   end
 end
 

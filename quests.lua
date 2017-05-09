@@ -44,6 +44,7 @@ mod.QuestDB = {
 
     -- Other
     [43943] = true,     -- Withered Army Training
+    [42880] = true,     -- Meeting Their Quota
   },
   Raid = {   -- Generated with tools/import.rb
     --[[

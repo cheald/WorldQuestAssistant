@@ -547,6 +547,6 @@ end
 
 function mod:Debug(...)
   if self.debug then
-    self:Print(...)
+    self:Print("|cffaaaaaa", ...)
   end
 end
