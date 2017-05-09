@@ -249,7 +249,7 @@ local options = {
               set = function(info, v) mod.db.profile.filters.nonElite = v end
             }
           }
-        }
+        },
       }
     },
     credits = {

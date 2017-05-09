@@ -17,6 +17,7 @@ locale\deDE.lua
 core.lua
 modules\map.lua
 modules\kaliels_tracker.lua
+modules\leech_police.lua
 quests.lua
 config.lua
 ui.lua

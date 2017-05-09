@@ -10,4 +10,7 @@
       WQA:CreateQuestGroup(WQA:GetCurrentWorldQuestID())
     end
   </Binding>
+  <Binding name="WQA_ANTI_LEECH" header="WQAHEAD" category="ADDONS">
+    WQA:GetModule("Leech Police"):DropTheHammer()
+  </Binding>
 </Bindings>

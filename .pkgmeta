@@ -14,6 +14,7 @@ externals:
   libs/AceGUI-3.0: https://repos.wowace.com/wow/ace3/trunk/AceGUI-3.0/
   libs/AceHook-3.0: https://repos.wowace.com/wow/ace3/trunk/AceHook-3.0/
   libs/AceLocale-3.0: https://repos.wowace.com/wow/ace3/trunk/AceLocale-3.0/
+  libs/HereBeDragons-1.0: https://repos.wowace.com/wow/herebedragons/
 ignore:
     - tools/import.rb
     - .gitignore

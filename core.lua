@@ -41,12 +41,21 @@ function mod:OnInitialize()
       }
     }
   }
-	self.db = LibStub("AceDB-3.0"):New("WorldQuestAssistantDB", defaults, "Default")
-	self.options.args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
-	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("WorldQuestAssistant", self.options)
+  self.db = LibStub("AceDB-3.0"):New("WorldQuestAssistantDB", defaults, "Default")
+  self.options.args.profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
+  local order = 150
+  for k, v in self:IterateModules() do
+    if v.GetConfig then
+      local config = v:GetConfig()
+      config.order = order
+      order = order + 1
+      self.options.args.config.args[k:gsub(" ", "_")] = config
+    end
+  end
+  LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("WorldQuestAssistant", self.options)
 
-	ACD3:AddToBlizOptions("WorldQuestAssistant", nil, nil, "config")
-	ACD3:AddToBlizOptions("WorldQuestAssistant", L["Profiles"], "WorldQuestAssistant", "profiles")
+  ACD3:AddToBlizOptions("WorldQuestAssistant", nil, nil, "config")
+  ACD3:AddToBlizOptions("WorldQuestAssistant", L["Profiles"], "WorldQuestAssistant", "profiles")
 
   self:RegisterChatCommand("wqa", "Config")
 
@@ -194,6 +203,14 @@ function mod:QUEST_ACCEPTED(event, index, questID)
   end
 end
 
+function mod:IsWQAGroup()
+  return self:IsInParty() and isWQAGroup
+end
+
+function mod:SetWQAGroup()
+  isWQAGroup = true
+end
+
 function mod:QUEST_TURNED_IN(event, questID, experience, money)
   if QuestUtils_IsQuestWorldQuest(questID) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0 then
     automation.questComplete = true
@@ -228,8 +245,8 @@ end
 
 function mod:Config()
   InterfaceOptionsFrame:Hide()
-	ACD3:SetDefaultSize("WorldQuestAssistant", 680, 550)
-	ACD3:Open("WorldQuestAssistant")
+  ACD3:SetDefaultSize("WorldQuestAssistant", 680, 550)
+  ACD3:Open("WorldQuestAssistant")
 end
 
 function mod:HomeRealmType()
