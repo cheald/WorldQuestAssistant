@@ -15,7 +15,7 @@ local TICK_FREQUENCY = 1
 local SECONDS_PER_TICK = 1 / TICK_FREQUENCY
 local MAX_FLYING_IDLE_TICKS = 8
 local MAX_OOB_IDLE_TICKS = 8 * SECONDS_PER_TICK
-local MAX_IDLE_TICKS = 45 * SECONDS_PER_TICK  -- If a player hasn't moved in this many seconds, mark as kickable. This is generous because sitting around waiting for spawns may result in idling.
+local MAX_IDLE_TICKS = 30 * SECONDS_PER_TICK   -- If a player hasn't moved in this many seconds, mark as kickable. This is generous because sitting around waiting for spawns may result in idling.
 local MAX_OOB_TICKS = 15 * SECONDS_PER_TICK    -- If a player is out of bounds this many seconds, mark as kickable
 
 
@@ -23,6 +23,8 @@ local KickFlaggedFrame
 
 function mod:OnInitialize()
   self:RegisterEvent("GROUP_ROSTER_UPDATE")
+  self:RegisterEvent("PLAYER_REGEN_DISABLED")
+  self:RegisterEvent("PLAYER_REGEN_ENABLED")
   self.db = WQA.db:RegisterNamespace("LeechPolice", {
     profile = {
       kickOob = true,
@@ -109,8 +111,21 @@ local function getKickMessage(msg, unit)
   return msg
 end
 
+local hasEnteredCombatForGroup = false
+local lastCombatAt = 0
+
+function mod:PLAYER_REGEN_DISABLED()
+  hasEnteredCombatForGroup = true
+  lastCombatAt = GetTime()
+end
+
+function mod:PLAYER_REGEN_ENABLED()
+  lastCombatAt = GetTime()
+end
+
 function mod:GROUP_ROSTER_UPDATE()
   if not WQA:IsWQAGroup() then
+    hasEnteredCombatForGroup = false
     table.wipe(lastPosition)
     table.wipe(unitsPendingKicks)
     table.wipe(kickedUnits)
@@ -137,6 +152,9 @@ function mod:OnEnable()
         local unit = (IsInRaid() and "raid" or "party") .. i
         if UnitExists(unit) then
           mod:PoliceUnit(unit)
+        end
+        if UnitAffectingCombat("player") then
+          lastCombatAt = GetTime()
         end
       end
     end
@@ -178,10 +196,14 @@ function mod:DropTheHammer()
     end
     local count = 0
     for k, v in pairs(unitsPendingKicks) do
-      count = count + 1
+      if v then
+        count = count + 1
+      end
     end
     if count == 0 then
       KickFlaggedFrame:Hide()
+    else
+      WQA:Debug("Kicks remaining:", count)
     end
   end
 end
@@ -217,26 +239,32 @@ function mod:UpdateUnitStats(unit)
   lastPosition[guid].x = x
   lastPosition[guid].y = y
 
-  if (IsFlying(unit) or IsMounted(unit))  then
-    lastPosition[guid].ticksNonInteracting = lastPosition[guid].ticksNonInteracting + 1
-    WQA:Debug("Adding non-interaction tick for", UnitName(unit), lastPosition[guid].ticksNonInteracting, "flying:", IsFlying(unit), "mounted:", IsMounted(unit), "stealthed:", IsStealthed(unit))
-  else
-    if lastPosition[guid].ticksNonInteracting > 0 then
-      WQA:Debug("Reset non-interaction ticks for", UnitName(unit))
+  -- We don't start accumulating idle information until we've entered combat once in the group
+  -- This is specifically to avoid accumulating "idle" scores when waiting for an elite spawn
+  if hasEnteredCombatForGroup and (GetTime() - lastCombatAt) < (MAX_IDLE_TICKS / SECONDS_PER_TICK) then
+    if IsFlying(unit) then
+      lastPosition[guid].ticksNonInteracting = lastPosition[guid].ticksNonInteracting + 1
+      WQA:Debug("Adding non-interaction tick for", UnitName(unit), lastPosition[guid].ticksNonInteracting, "flying:", IsFlying(unit))
+    else
+      if lastPosition[guid].ticksNonInteracting > 0 then
+        WQA:Debug("Reset non-interaction ticks for", UnitName(unit))
+      end
+      lastPosition[guid].ticksNonInteracting = 0
     end
-    lastPosition[guid].ticksNonInteracting = 0
-  end
 
-  if distance and distance < 0.1 and not UnitAffectingCombat(unit) then
-    lastPosition[guid].ticksIdle = lastPosition[guid].ticksIdle + 1
-    WQA:Debug("Adding idle tick for", UnitName(unit), lastPosition[guid].ticksIdle)
-  elseif distance then
-    if lastPosition[guid].ticksIdle > 0 then
-      WQA:Debug("Reset idle ticks for", UnitName(unit))
+    if distance and distance < 0.1 and not UnitAffectingCombat(unit) then
+      lastPosition[guid].ticksIdle = lastPosition[guid].ticksIdle + 1
+      WQA:Debug("Adding idle tick for", UnitName(unit), lastPosition[guid].ticksIdle)
+    elseif distance then
+      if lastPosition[guid].ticksIdle > 0 then
+        WQA:Debug("Reset idle ticks for", UnitName(unit))
+      end
+      lastPosition[guid].ticksIdle = 0
+    else
+      WQA:Debug("Unable to get distance from last movement for unit", UnitName(unit))
     end
-    lastPosition[guid].ticksIdle = 0
   else
-    WQA:Debug("Unable to get distance from last movement for unit", UnitName(unit))
+    WQA:Debug("Not performing idle checks because player has not entered combat in the last 40 seconds")
   end
 
   local info = mod:GetCurrentQuestIDInfo()
