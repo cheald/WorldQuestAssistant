@@ -170,13 +170,13 @@ function mod:PoliceUnit(unit)
   local stats = self:UpdateUnitStats(unit)
   if not stats then return end
   if stats.ticksIdle > MAX_OOB_IDLE_TICKS and stats.ticksOOB > MAX_OOB_IDLE_TICKS then
-    self:WoopWoop(unit, "oob_and_idle")
+    self:WoopWoop(unit, "oob_and_idle", math.floor(lastPosition[guid].distanceFromQuest))
   elseif stats.ticksIdle > MAX_FLYING_IDLE_TICKS and stats.ticksNonInteracting > MAX_FLYING_IDLE_TICKS then
     self:WoopWoop(unit, "idle_flying")
   elseif stats.ticksIdle > MAX_IDLE_TICKS then
     self:WoopWoop(unit, "idle")
   elseif stats.ticksOOB > MAX_OOB_TICKS then
-    self:WoopWoop(unit, "oob")
+    self:WoopWoop(unit, "oob", math.floor(lastPosition[guid].distanceFromQuest))
   else
     unitsPendingKicks[stats.guid] = nil
   end
@@ -208,10 +208,10 @@ function mod:DropTheHammer()
   end
 end
 
-function mod:WoopWoop(unit, reason) -- That's the sound of the police
+function mod:WoopWoop(unit, reason, ...) -- That's the sound of the police
   if UnitIsGroupLeader("player") then
     if not unitsPendingKicks[UnitGUID(unit)] then
-      WQA:Print(getKickMessage(L["Kick prompt"]:format(UnitName(unit), L["kick_reason_" .. reason]), unit))
+      WQA:Print(getKickMessage(L["Kick prompt"]:format(UnitName(unit), L["kick_reason_" .. reason]:format(...)), unit))
       unitsPendingKicks[UnitGUID(unit)] = reason
       mod:AttachUIToActiveQuestBlock()
     end
@@ -233,6 +233,7 @@ function mod:UpdateUnitStats(unit)
   if not guid then return nil end
 
   local x, y = HBD:GetUnitWorldPosition(unit)
+  local px, py = HBD:GetUnitWorldPosition("player")
   lastPosition[guid] = lastPosition[guid] or {x = 0, y = 0, ticksIdle = 0, ticksOOB = 0, ticksNonInteracting = 0, distanceFromQuest = 0, guid = guid}
 
   local distance, deltaX, deltaY = HBD:GetWorldDistance(nil, x, y, lastPosition[guid].x, lastPosition[guid].y)
@@ -271,13 +272,17 @@ function mod:UpdateUnitStats(unit)
   if info then
     local x, y = HBD:GetWorldCoordinatesFromZone(info.x, info.y, GetCurrentMapAreaID(), nil)
     local distance, deltaX, deltaY = HBD:GetWorldDistance(nil, x, y, lastPosition[guid].x, lastPosition[guid].y)
-    if distance then
+    local playerDistance = HBD:GetWorldDistance(nil, x, y, px, py)
+    local playerUnitDistance = HBD:GetWorldDistance(nil, lastPosition[guid].x, lastPosition[guid].y, px, py)
+
+    -- We only perform OOB checks when we're in bounds
+    if distance and playerUnitDistance and playerDistance and playerDistance < 300 then
       lastPosition[guid].distanceFromQuest = distance
       -- If they're REALLY far away, we're going to penalize them heavily
-      if distance > 1000 then
+      if distance > 1000 and playerUnitDistance > 1000 then
         lastPosition[guid].ticksOOB = lastPosition[guid].ticksOOB + 10
         WQA:Debug("Adding extreme OOB tick for", UnitName(unit), lastPosition[guid].ticksOOB, "distance", distance)
-      elseif distance > 500 then
+      elseif distance > 500 and playerUnitDistance > 500 then
         lastPosition[guid].ticksOOB = lastPosition[guid].ticksOOB + 1
         WQA:Debug("Adding OOB tick for", UnitName(unit), lastPosition[guid].ticksOOB, "distance", distance)
       else
@@ -286,8 +291,6 @@ function mod:UpdateUnitStats(unit)
         end
         lastPosition[guid].ticksOOB = 0
       end
-    else
-      WQA:Debug("Unable to get distance from quest for unit", UnitName(unit))
     end
   end
 
