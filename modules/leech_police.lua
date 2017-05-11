@@ -169,14 +169,16 @@ end
 function mod:PoliceUnit(unit)
   local stats = self:UpdateUnitStats(unit)
   if not stats then return end
+  local distance = stats.distanceFromQuest and math.floor(stats.distanceFromQuest) or "???"
+
   if stats.ticksIdle > MAX_OOB_IDLE_TICKS and stats.ticksOOB > MAX_OOB_IDLE_TICKS then
-    self:WoopWoop(unit, "oob_and_idle", math.floor(lastPosition[guid].distanceFromQuest))
+    self:WoopWoop(unit, "oob_and_idle", distance)
   elseif stats.ticksIdle > MAX_FLYING_IDLE_TICKS and stats.ticksNonInteracting > MAX_FLYING_IDLE_TICKS then
     self:WoopWoop(unit, "idle_flying")
   elseif stats.ticksIdle > MAX_IDLE_TICKS then
     self:WoopWoop(unit, "idle")
   elseif stats.ticksOOB > MAX_OOB_TICKS then
-    self:WoopWoop(unit, "oob", math.floor(lastPosition[guid].distanceFromQuest))
+    self:WoopWoop(unit, "oob", distance)
   else
     unitsPendingKicks[stats.guid] = nil
   end
