@@ -281,8 +281,6 @@ function mod:UpdateUnitStats(unit)
         WQA:Debug("Reset idle ticks for", UnitName(unit))
       end
       lastPosition[guid].ticksIdle = 0
-    else
-      WQA:Debug("Unable to get distance from last movement for unit", UnitName(unit))
     end
   else
     WQA:Debug("Not performing idle checks because player has not entered combat in the last 40 seconds")
