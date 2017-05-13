@@ -405,11 +405,16 @@ do
     self.currentQuestInfo = info
     skipWorldQuestCheck = skipWQCheck
     requestedGroupsViaWQA = true
-    C_LFGList.Search(1, info.questName, 0, 4, {})
+    C_LFGList.Search(1, info.questName, 0, 4, C_LFGList.GetDefaultLanguageSearchFilter())
   end
 
   function mod:FilterGroups()
     local searchCount, searchResults = C_LFGList.GetSearchResults()
+    -- We somehow ended up with a nil search query that returned a ton of groups
+    if #searchResults > 90 then
+      return
+    end
+
     if not ((skipWorldQuestCheck or self:GetCurrentWorldQuestID()) and requestedGroupsViaWQA) then
       return
     end
@@ -436,7 +441,7 @@ do
         end
       end
       local isRecent = isRecentGroup(result)
-      if members < self:MaxMembersForQuest() and name == self.currentQuestInfo.questName and canJoin and not isRecent then
+      if members < self:MaxMembersForQuest() and canJoin and not isRecent then
         tinsert(self.pendingGroups, result)
         realmInfo[result] = {members = members, realm = realm, autoinv = false, isPVE = isPVE}
       elseif isRecent then
