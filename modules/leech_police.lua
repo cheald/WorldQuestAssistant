@@ -130,17 +130,32 @@ function mod:GROUP_ROSTER_UPDATE()
     table.wipe(unitsPendingKicks)
     table.wipe(kickedUnits)
     KickFlaggedFrame:Hide()
-  elseif WQA:IsWQAGroup() and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 1 then
+  elseif WQA:IsWQAGroup() then
+    local foundUnits = {}
+    local pendingKickCount = 0
     for i = 1, GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) do
       local unit = (IsInRaid() and "raid" or "party") .. i
       if UnitExists(unit) then
         local guid = UnitGUID(unit)
+        foundUnits[guid] = true
         if kickedUnits[guid] then
           unitsPendingKicks[guid] = "recurring invite"
           WQA:Print(getKickMessage(L["Kicked member rejoined"]:format(UnitName(unit)), unit))
           mod:AttachUIToActiveQuestBlock()
         end
+        if unitsPendingKicks[guid] then
+          pendingKickCount = pendingKickCount + 1
+        end
       end
+    end
+
+    for guid, reason in pairs(unitsPendingKicks) do
+      if not foundUnits[guid] then
+        unitsPendingKicks[guid] = nil
+      end
+    end
+    if pendingKickCount == 0 then
+      KickFlaggedFrame:Hide()
     end
   end
 end
@@ -186,6 +201,7 @@ end
 
 function mod:DropTheHammer()
   if WQA:IsWQAGroup() and UnitIsGroupLeader("player") then
+    local kickedAny = false
     for i = 1, GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) do
       local unit = (IsInRaid() and "raid" or "party") .. i
       local guid = UnitGUID(unit)
@@ -193,13 +209,18 @@ function mod:DropTheHammer()
         kickedUnits[guid] = true
         unitsPendingKicks[guid] = nil
         UninviteUnit(unit)
+        kickedAny = true
         break
       end
+    end
+    if not kickedAny then
+      table.wipe(unitsPendingKicks)
     end
     local count = 0
     for k, v in pairs(unitsPendingKicks) do
       if v then
         count = count + 1
+        break
       end
     end
     if count == 0 then

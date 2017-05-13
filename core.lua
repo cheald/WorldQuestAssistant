@@ -330,6 +330,7 @@ function mod:MaybeLeaveParty()
   if IsInInstance() then
     return
   elseif self:IsInParty() then
+    self:Debug("Leaving party!")
     LeaveParty()
   end
 end
