@@ -132,7 +132,6 @@ function mod:GROUP_ROSTER_UPDATE()
     KickFlaggedFrame:Hide()
   elseif WQA:IsWQAGroup() then
     local foundUnits = {}
-    local pendingKickCount = 0
     for i = 1, GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) do
       local unit = (IsInRaid() and "raid" or "party") .. i
       if UnitExists(unit) then
@@ -143,9 +142,6 @@ function mod:GROUP_ROSTER_UPDATE()
           WQA:Print(getKickMessage(L["Kicked member rejoined"]:format(UnitName(unit)), unit))
           mod:AttachUIToActiveQuestBlock()
         end
-        if unitsPendingKicks[guid] then
-          pendingKickCount = pendingKickCount + 1
-        end
       end
     end
 
@@ -154,9 +150,7 @@ function mod:GROUP_ROSTER_UPDATE()
         unitsPendingKicks[guid] = nil
       end
     end
-    if pendingKickCount == 0 then
-      KickFlaggedFrame:Hide()
-    end
+    self:UpdateKickButton()
   end
 end
 
@@ -196,6 +190,7 @@ function mod:PoliceUnit(unit)
     self:WoopWoop(unit, "oob", distance)
   else
     unitsPendingKicks[stats.guid] = nil
+    self:UpdateKickButton()
   end
 end
 
@@ -216,19 +211,20 @@ function mod:DropTheHammer()
     if not kickedAny then
       table.wipe(unitsPendingKicks)
     end
-    local count = 0
-    for k, v in pairs(unitsPendingKicks) do
-      if v then
-        count = count + 1
-        break
-      end
-    end
-    if count == 0 then
-      KickFlaggedFrame:Hide()
-    else
-      WQA:Debug("Kicks remaining:", count)
+    self:UpdateKickButton()
+  end
+end
+
+function mod:UpdateKickButton()
+  for i = 1, GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) do
+    local unit = (IsInRaid() and "raid" or "party") .. i
+    local guid = UnitGUID(unit)
+    if unitsPendingKicks[guid] then
+      KickFlaggedFrame:Show()
+      return
     end
   end
+  KickFlaggedFrame:Hide()
 end
 
 function mod:WoopWoop(unit, reason, ...) -- That's the sound of the police
@@ -236,7 +232,8 @@ function mod:WoopWoop(unit, reason, ...) -- That's the sound of the police
     if not unitsPendingKicks[UnitGUID(unit)] then
       WQA:Print(getKickMessage(L["Kick prompt"]:format(UnitName(unit), L["kick_reason_" .. reason]:format(...)), unit))
       unitsPendingKicks[UnitGUID(unit)] = reason
-      mod:AttachUIToActiveQuestBlock()
+      self:AttachUIToActiveQuestBlock()
+      self:UpdateKickButton()
     end
   end
 end
