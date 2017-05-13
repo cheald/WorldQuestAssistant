@@ -10,6 +10,8 @@ mod.QuestDB = {
   Blacklist = {
     -- Broken Shore
     [45379] = true,     -- Treasure Master Iks'reeged
+    [46825] = true,     -- Mud Mucking
+    [46308] = true,     -- Leave A Trail
 
     -- Kirin Tor Quests
     [45032] = true,     -- Like The Wind, Suramar
@@ -47,6 +49,7 @@ mod.QuestDB = {
     [42880] = true,     -- Meeting Their Quota
     [44891] = true,     -- 2v2 Weekly Quest
     [44908] = true,     -- 3v3 Weekly Quest
+    [42969] = true,     -- A spy in our midst - not really something that can be groupable, and it often overlaps with other quests
   },
   Raid = {   -- Generated with tools/import.rb
     --[[
