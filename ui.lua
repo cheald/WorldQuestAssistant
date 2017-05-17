@@ -44,7 +44,7 @@ StaticPopupDialogs["WQA_LEAVE_GROUP"] = {
   button1 = L["Yes"],
   button2 = L["No"],
   OnAccept = function()
-    LeaveParty()
+    WQA:MaybeLeaveParty()
   end,
   timeout = 45,
   whileDead = true,
@@ -169,7 +169,7 @@ local function CreateButtonGroup()
   f:Hide()
   f:SetSize(30, 30)
   f:SetScript("OnClick", function()
-    LeaveParty()
+    WQA:MaybeLeaveParty()
   end)
   f.tooltipText = L["Leave Party"]
   f:SetScript("OnEnter", showTooltip)

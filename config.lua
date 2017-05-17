@@ -205,6 +205,15 @@ local options = {
                 mod.db.profile.showUI = v
                 mod.UI:SetupTrackerBlocks()
               end,
+            },
+            searchByQuestID = {
+              type = "toggle",
+              name = L["Search by quest ID"],
+              desc = L["Perform searches by quest ID rather than name. Will only find groups created by WQA/WQGF, but may work better cross-region."],
+              get = function() return mod.db.profile.searchByID end,
+              set = function(info, v)
+                mod.db.profile.searchByID = v
+              end
             }
           },
         },

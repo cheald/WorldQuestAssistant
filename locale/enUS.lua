@@ -87,3 +87,5 @@ L["Will not automatically leave this group"] = true
 L["World Quest Assistant"] = true
 L["Yes"] = true
 L["Kicked member rejoined"] = "Previously kicked member %s rejoined the group."
+L["Search by quest ID"] = true
+L["Perform searches by quest ID rather than name. Will only find groups created by WQA/WQGF, but may work better cross-region."] = true

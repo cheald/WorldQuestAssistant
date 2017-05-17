@@ -13,7 +13,8 @@ function mod:SetupTrackerBlocks()
   -- If any blocks were set up, anchor them to the Kaliel's sbutton frame
   local anchor = _G["!KalielsTrackerButtons"]:IsVisible() and _G["!KalielsTrackerButtons"] or _G["!KalielsTrackerFrame"]
   local anchorPoint, relativePoint = "TOPLEFT", "TOPRIGHT"
-  if anchor:GetLeft() > UIParent:GetWidth() / 2 then
+  local left = anchor and anchor:GetLeft()
+  if left > UIParent:GetWidth() / 2 then
     anchorPoint, relativePoint = "TOPRIGHT", "TOPLEFT"
   end
 

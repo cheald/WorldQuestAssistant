@@ -146,8 +146,11 @@ end
 function mod:UNIT_AURA()
   if self.awaitingFlying then
     if IsFlying() then
+      self.awaitingFlying = false
+      if mod.leaveTimer then
+        mod.leaveTimer:Cancel()
+      end
       mod.leaveTimer = C_Timer.NewTimer(0.25, function()
-        self.awaitingFlying = false
         self:MaybeLeaveParty()
       end)
     end
@@ -326,10 +329,13 @@ function mod:MaxMembersForQuest()
   end
 end
 
+local lastLeave = GetTime()
 function mod:MaybeLeaveParty()
+  if GetTime() - lastLeave < 3 then return end
   if IsInInstance() then
     return
   elseif self:IsInParty() then
+    lastLeave = GetTime()
     self:Debug("Leaving party!")
     LeaveParty()
   end
@@ -405,7 +411,8 @@ do
     self.currentQuestInfo = info
     skipWorldQuestCheck = skipWQCheck
     requestedGroupsViaWQA = true
-    C_LFGList.Search(1, info.questName, 0, 4, C_LFGList.GetDefaultLanguageSearchFilter())
+    local searchString = (not self.db.profile.searchByID) and info.questName or questID
+    C_LFGList.Search(1, searchString)
   end
 
   function mod:FilterGroups()
