@@ -389,7 +389,7 @@ function mod:CreateQuestGroup(questID)
   StaticPopup_Hide("WQA_NEW_GROUP")
   local info = self:GetQuestInfo(questID or self.activeQuestID)
   self.currentQuestInfo = info
-  _G.C_LFGList.CreateListing(info.activityID, "", 0, 0, "", string.format("Created by World Quest Assistant #WQ:%s#%s#", self.activeQuestID, self:HomeRealmType() or "NIL"), true, false, info.questID)
+  _G.C_LFGList.CreateListing(info.activityID, "", 0, 0, "", string.format("Created by World Quest Assistant #WQ:%s#%s#", self.activeQuestID, self:HomeRealmType() or "NIL"), true, false, tonumber(info.questID))
   isWQAGroup = true
   self:TurnOffRaidConvertWarning()
 end
@@ -412,7 +412,7 @@ do
     skipWorldQuestCheck = skipWQCheck
     requestedGroupsViaWQA = true
     local searchString = (not self.db.profile.searchByID) and info.questName or questID
-    C_LFGList.Search(1, searchString)
+    C_LFGList.Search(1, LFGListSearchPanel_ParseSearchTerms(searchString))
   end
 
   function mod:FilterGroups()
