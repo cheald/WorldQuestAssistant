@@ -89,7 +89,7 @@ function mod:ClickWQSecure(poiButton, mouseButton)
     handleMapGroupFind(poiButton)
     -- Undo tracking installed on click by the base UI
     if IsWorldQuestHardWatched(poiButton.questID) or (IsWorldQuestWatched(poiButton.questID) and GetSuperTrackedQuestID() == poiButton.questID) then
-      BonusObjectiveTracker_UntrackWorldQuest(poiButton.questID)
+        RemoveWorldQuestWatch(poiButton.questID)
     end
   end
 end
