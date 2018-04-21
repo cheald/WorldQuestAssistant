@@ -44,6 +44,27 @@ mod.QuestDB = {
     [45068] = true,     -- Barrels 'o Fun, Suramar
     [45072] = true,     -- Barrels 'o Fun, Stormheim
 
+    -- Supplies needed
+    [41288] = true,     -- Supplies Needed: Aethril
+    [48338] = true,     -- Supplies Needed: Astral Glory
+    [41293] = true,     -- Supplies Needed: Dreamleaf
+    [48358] = true,     -- Supplies Needed: Empyrium
+    [41318] = true,     -- Supplies Needed: Felslate
+    [48360] = true,     -- Supplies Needed: Fiendish Leather
+    [41298] = true,     -- Supplies Needed: Fjarnskaggl
+    [41224] = true,     -- Supplies Needed: Foxflower
+    [41317] = true,     -- Supplies Needed: Leystone
+    [41316] = true,     -- Supplies Needed: Leystone
+    [41207] = true,     -- Supplies Needed: Leystone
+    [41315] = true,     -- Supplies Needed: Leystone
+    [48374] = true,     -- Supplies Needed: Lightweave Cloth
+    [41303] = true,     -- Supplies Needed: Starlight Roses
+    [41237] = true,     -- Supplies Needed: Stonehide Leather
+    [41351] = true,     -- Supplies Needed: Stonehide Leather
+    [41339] = true,     -- Supplies Needed: Stonehide Leather
+    [41327] = true,     -- Supplies Needed: Stormscales
+    [41345] = true,     -- Supplies Needed: Stormscales
+    
     -- Other
     [43943] = true,     -- Withered Army Training
     [42880] = true,     -- Meeting Their Quota

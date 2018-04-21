@@ -10,5 +10,6 @@ def get_quests_table(query, type)
   y["data"].sort_by {|q| q["name"] }.map {|q| "[#{q["id"]}] = true,".ljust(20) + "-- #{q["name"]}" }.join("\n")
 end
 
+puts get_quests_table "Supplies+Needed", WORLD_QUEST_TYPES.join(":")
 puts get_quests_table "WANTED", WORLD_QUEST_TYPES.join(":")
 puts get_quests_table "DANGER", WORLD_QUEST_TYPES.join(":")
