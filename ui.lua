@@ -284,7 +284,7 @@ function mod.UI:GetTrackerBlocks(callback)
   if not ObjectiveTrackerFrame.MODULES then return end
   for i, module in ipairs(ObjectiveTrackerFrame.MODULES) do
     for name, block in pairs(module.usedBlocks) do
-      if mod:IsEligibleQuest(block.id) then
+      if mod:IsEligibleQuest(block.id, true) then
         callback(block)
       end
     end

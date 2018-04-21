@@ -218,7 +218,7 @@ function mod:QUEST_TURNED_IN(event, questID, experience, money)
   if QuestUtils_IsQuestWorldQuest(questID) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0 then
     automation.questComplete = true
 
-    if isWQAGroup then
+    if self:IsWQAGroup() then
       if self.db.profile.alertComplete then
         local questName = self.currentQuestInfo and self.currentQuestInfo.questName or self:GetQuestInfo(questID).questName
         SendChatMessage(L["[WQA] Quest '%s' complete!"]:format(questName), IsInRaid() and "RAID" or "PARTY")
@@ -389,6 +389,7 @@ function mod:CreateQuestGroup(questID)
   StaticPopup_Hide("WQA_NEW_GROUP")
   local info = self:GetQuestInfo(questID or self.activeQuestID)
   self.currentQuestInfo = info
+  -- known bug: doesn't work with Kosumoth the Hungering, because "info" is empty (no activityID)
   _G.C_LFGList.CreateListing(info.activityID, "", 0, 0, "", string.format("Created by World Quest Assistant #WQ:%s#%s#", self.activeQuestID, self:HomeRealmType() or "NIL"), true, false, tonumber(info.questID))
   isWQAGroup = true
   self:TurnOffRaidConvertWarning()
@@ -412,7 +413,7 @@ do
     skipWorldQuestCheck = skipWQCheck
     requestedGroupsViaWQA = true
     local searchString = (not self.db.profile.searchByID) and info.questName or questID
-    C_LFGList.Search(1, LFGListSearchPanel_ParseSearchTerms(searchString))
+    C_LFGList.Search(info.categoryID, LFGListSearchPanel_ParseSearchTerms(searchString), 0, 0, C_LFGList.GetLanguageSearchFilter())
   end
 
   function mod:FilterGroups()
