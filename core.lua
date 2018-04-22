@@ -215,7 +215,7 @@ function mod:SetWQAGroup()
 end
 
 function mod:QUEST_TURNED_IN(event, questID, experience, money)
-  if QuestUtils_IsQuestWorldQuest(questID) and GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0 then
+  if self.currentQuestInfo and (questID == tonumber(self.currentQuestInfo.questID)) and (GetNumGroupMembers(LE_PARTY_CATEGORY_HOME) > 0) then
     automation.questComplete = true
 
     if self:IsWQAGroup() then
