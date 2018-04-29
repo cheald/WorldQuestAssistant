@@ -6,6 +6,8 @@ local LRI = LibStub("LibRealmInfo")
 
 _G.WQA = mod
 
+mod.ID_SCENARIO = "Scenario"
+
 local automation = {
   lastTime = 0,
   hasSearched = false,
@@ -291,6 +293,9 @@ function mod:IsEligibleQuest(questID, skipLogCheck)
 
   if QuestUtils_IsQuestWorldQuest(questID) and (GetQuestLogIndexByID(questID) ~= 0 or skipLogCheck) then
     local info = self:GetQuestInfo(questID)
+    if (info.activityID == nil) or (info.categoryID == nil) then
+      return false
+    end
     if (info.worldQuestType == LE_QUEST_TAG_TYPE_PET_BATTLE and not mod.db.profile.filters.petBattles) or
        (info.worldQuestType == LE_QUEST_TAG_TYPE_PROFESSION and not mod.db.profile.filters.tradeskills) or
        (info.worldQuestType == LE_QUEST_TAG_TYPE_PVP and not mod.db.profile.filters.pvp) or
@@ -312,6 +317,9 @@ function mod:IsEligibleQuest(questID, skipLogCheck)
 end
 
 function mod:IsRaidCompatible(questID)
+  if questID == self.ID_SCENARIO then
+    return true
+  end
   local info = self:GetQuestInfo(questID)
   if info.rarity == LE_WORLD_QUEST_QUALITY_EPIC then
     return true
@@ -362,14 +370,44 @@ end
 function mod:GetQuestInfo(questID)
   if not questID then return {} end
 
-  local activityID, categoryID, filters, questName = LFGListUtil_GetQuestCategoryData(questID)
+  local groupName = ""
+  local searchTerms
+  local activityID, categoryID, filters, questName
   local tagID, tagName, worldQuestType, rarity, elite, tradeskillLineIndex
-  questName = questName or QuestUtils_GetQuestName(questID)
-  if QuestUtils_IsQuestWorldQuest(questID) then
-    tagID, tagName, worldQuestType, rarity, elite, tradeskillLineIndex = GetQuestTagInfo(questID)
+  if (questID == self.ID_SCENARIO) then
+    activityID = 16 -- User defined PvE
+    categoryID = 6  -- User defined
+    groupName = C_Scenario.GetInfo()
+    -- the group search string is just the name after the colon
+    -- (hopefully this works with all languages)
+    -- if the name is too short, we will add "invasion" to it (think "Invasion Point: Val")
+    searchTerms = string.match(groupName, ":%s*(.*)") or groupName
+    if string.len(searchTerms) < 4 then
+        -- wild hack, this needs to be at least localized
+        searchTerms = "invasion " .. searchTerms
+    end
+  else 
+    activityID, categoryID, filters, questName = LFGListUtil_GetQuestCategoryData(questID)
+    questName = questName or QuestUtils_GetQuestName(questID)
+    if QuestUtils_IsQuestWorldQuest(questID) then
+        tagID, tagName, worldQuestType, rarity, elite, tradeskillLineIndex = GetQuestTagInfo(questID)
+    end
+
+  -- if epic quest at level 110 with category "world quest", use acitivity "world bosses" instead (the former is limited to 5 players)
+  -- currently this applies to 43513 Na'zak das Scheusal, 46945 Si'vash, 46947 Brutallus, 46948 Malificus, 47061 Apocron
+    if (rarity == LE_WORLD_QUEST_QUALITY_EPIC) and (categoryID == 1) then
+      local minLevel = select(7, C_LFGList.GetActivityInfo(activityID))
+      if minLevel == 110 then
+        activityID = 458
+        categoryID = 3
+      end
+    end
   end
+  
 
   return {
+    searchTerms = searchTerms,
+    groupName = groupName,
     activityID = activityID,
     categoryID = categoryID,
     filters = filters,
@@ -387,10 +425,12 @@ end
 function mod:CreateQuestGroup(questID)
   StaticPopup_Hide("WQA_FIND_GROUP")
   StaticPopup_Hide("WQA_NEW_GROUP")
-  local info = self:GetQuestInfo(questID or self.activeQuestID)
+  table.wipe(self.pendingGroups)
+  self.activeQuestID = questID or self.activeQuestID
+  local info = self:GetQuestInfo(self.activeQuestID)
   self.currentQuestInfo = info
   -- known bug: doesn't work with Kosumoth the Hungering, because "info" is empty (no activityID)
-  _G.C_LFGList.CreateListing(info.activityID, "", 0, 0, "", string.format("Created by World Quest Assistant #WQ:%s#%s#", self.activeQuestID, self:HomeRealmType() or "NIL"), true, false, tonumber(info.questID))
+  _G.C_LFGList.CreateListing(info.activityID, info.groupName, 0, 0, "", string.format("Created by World Quest Assistant #WQ:%s#%s#", self.activeQuestID, self:HomeRealmType() or "NIL"), true, false, tonumber(info.questID))
   isWQAGroup = true
   self:TurnOffRaidConvertWarning()
 end
@@ -412,7 +452,7 @@ do
     self.currentQuestInfo = info
     skipWorldQuestCheck = skipWQCheck
     requestedGroupsViaWQA = true
-    local searchString = (not self.db.profile.searchByID) and info.questName or questID
+    local searchString = info.searchTerms or ((not self.db.profile.searchByID) and info.questName or questID)
     C_LFGList.Search(info.categoryID, LFGListSearchPanel_ParseSearchTerms(searchString), 0, 0, C_LFGList.GetLanguageSearchFilter())
   end
 

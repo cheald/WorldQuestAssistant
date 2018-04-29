@@ -179,10 +179,10 @@ local function CreateButtonGroup()
   f:SetSize(1, 1)
   f:Hide()
 
-  ButtonsFrame.Attach = function(self, block)
+  ButtonsFrame.Attach = function(self, block, questID)
     self:SetParent(block)
-    if block and block.id then
-      f.questID = tostring(block.id)
+    if block and questID then
+      f.questID = tostring(questID)
       blockAttachments[f.questID] = f
       f:Show()
       updateLayout(block)
@@ -245,14 +245,15 @@ end
 local mapButton = nil
 local preserved = {}
 
-local function updateBlock(block)
-  local strID = tostring(block.id)
+local function updateBlock(block, questID)
+  local ID = questID or block.id
+  local strID = tostring(ID)
   local group = blockAttachments[strID] or GetButtonGroup()
   preserved[strID] = true
   if mod:IsInOtherQueues() then
     group:Hide()
   else
-    group:Attach(block)
+    group:Attach(block, ID)
     group:Update()
   end
   return group
@@ -270,6 +271,10 @@ function mod.UI:SetupTrackerBlocks()
   if mapButton then
     local m = updateBlock(mapButton)
     m:SetScale(0.8)
+  end
+  if select(10, C_Scenario.GetInfo()) == LE_SCENARIO_TYPE_LEGION_INVASION then
+    -- TODO: also check IsEligibleQuest
+    updateBlock(ObjectiveTrackerFrame.BlocksFrame.ScenarioHeader, mod.ID_SCENARIO)
   end
 
   for id, block in pairs(blockAttachments) do
