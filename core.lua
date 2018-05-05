@@ -187,7 +187,6 @@ end
 function mod:QUEST_ACCEPTED(event, index, questID)
   if self:IsEligibleQuest(questID) then
     self.activeQuestID = questID
-    table.wipe(self.pendingGroups)
     self:ResetAutomation()
     C_Timer.After(3, function()
       self.UI:SetupTrackerBlocks()
@@ -593,7 +592,7 @@ function mod:Automate()
     end
   elseif #self.pendingGroups > 0 then
     self:Print(L["Automate: Joining next group"])
-    mod:JoinNextGroup(self.activeQuestID)
+    mod:JoinNextGroup(self.currentQuestInfo.questID)
   end
   automation.questComplete = false
   automation.lastTime = GetTime()

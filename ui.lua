@@ -142,7 +142,7 @@ local function CreateButtonGroup()
   f.SetPendingInvites = function(self)
     self:SetEnabled(#mod.pendingGroups > 0)
     self:SetText(#mod.pendingGroups)
-    if #mod.pendingGroups == 0 or tostring(mod.activeQuestID) ~= tostring(ButtonsFrame.questID) then
+    if #mod.pendingGroups == 0 or tostring(mod.currentQuestInfo.questID) ~= tostring(ButtonsFrame.questID) then
       self:Hide()
     else
       self:Show()
