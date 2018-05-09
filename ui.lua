@@ -54,14 +54,17 @@ StaticPopupDialogs["WQA_LEAVE_GROUP"] = {
 
 local buttonGroups = {}
 local blockAttachments = {}
+local numGlows = 0
 
 local function ReleaseButtonGroup(group)
   if group then
+    group.ApplyFrame:Hide()
     group:Hide()
     group:SetScale(1.0)
     group:ClearAllPoints()
     if group.questID then
       blockAttachments[group.questID] = nil
+      group.questID = nil
     end
     tinsert(buttonGroups, group)
   end
@@ -139,6 +142,7 @@ local function CreateButtonGroup()
   end)
 
   f = ApplyFrame
+  f:Hide()
   f.SetPendingInvites = function(self)
     self:SetEnabled(#mod.pendingGroups > 0)
     self:SetText(#mod.pendingGroups)
@@ -156,7 +160,8 @@ local function CreateButtonGroup()
   f.tooltipText = L["Apply to groups for this quest"]
   f:SetScript("OnEnter", showTooltip)
   f:SetScript("OnLeave", hideTooltip)
-  f.glow = CreateFrame("Frame", nil, ApplyFrame, "ActionBarButtonSpellActivationAlert")
+  numGlows = numGlows+1
+  f.glow = CreateFrame("Frame", "WQA_ButtonGlow"..numGlows, ApplyFrame, "ActionBarButtonSpellActivationAlert")
 
   f.glow.animIn:Stop()
   local frameWidth, frameHeight = f:GetSize()
@@ -192,7 +197,6 @@ local function CreateButtonGroup()
   end
 
   ButtonsFrame.Update = function(self)
-    ApplyFrame:SetPendingInvites()
     if mod:IsInParty() then
       ApplyFrame:Hide()
       NewGroupFrame:Hide()
@@ -224,15 +228,15 @@ function mod.UI:GetActiveQuestBlock()
   end
 end
 
-function mod.UI:SetSearch()
-  for id, attachment in pairs(blockAttachments) do
-    attachment:SetSearch()
-  end
-end
+--function mod.UI:SetSearch()
+--  for id, attachment in pairs(blockAttachments) do
+--    attachment:SetSearch()
+--  end
+--end
 
 function mod.UI:SetPendingInvites()
   for id, attachment in pairs(blockAttachments) do
-    attachment:SetSearch()
+    attachment.ApplyFrame:SetPendingInvites()
   end
 end
 

@@ -537,9 +537,8 @@ do
       if mod.db.profile.usePopups.createGroup and not automation.didAutomatedSearch then
         StaticPopup_Show("WQA_NEW_GROUP")
       end
-    else
-      mod.UI:SetupTrackerBlocks()
     end
+    mod.UI:SetPendingInvites()
 
     automation.didAutomatedSearch = false
   end
@@ -564,7 +563,7 @@ function mod:JoinNextGroup(questID)
       break
     end
   end
-  mod.UI:SetupTrackerBlocks()
+  mod.UI:SetPendingInvites()
 end
 
 function mod:ResetAutomation()
