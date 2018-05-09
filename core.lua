@@ -71,7 +71,8 @@ function mod:OnInitialize()
   self:RegisterEvent("UNIT_AURA")
   self:RegisterEvent("LFG_LIST_JOINED_GROUP")
 
-  hooksecurefunc("ObjectiveTracker_Update", function()
+  hooksecurefunc("ObjectiveTracker_Update", function(reason)
+    if (reason == OBJECTIVE_TRACKER_UPDATE_QUEST) then return end
     mod.UI:SetupTrackerBlocks()
   end)
 end

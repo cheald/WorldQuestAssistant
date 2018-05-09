@@ -297,6 +297,7 @@ function mod.UI:GetTrackerBlocks(callback)
 end
 
 function mod.UI:SetMapButton(button)
+  if (button == mapButton) then return end
   if button then
     button.id = tostring(button.questID)
     mapButton = button
