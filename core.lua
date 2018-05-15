@@ -242,9 +242,6 @@ function mod:QUEST_TURNED_IN(event, questID, experience, money)
 
     table.wipe(self.pendingGroups)
     self.activeQuestID = nil
-    if self:GetCurrentWorldQuestID() then
-      self:QUEST_ACCEPTED(nil, nil, self:GetCurrentWorldQuestID())
-    end
   end
 end
 
