@@ -162,7 +162,6 @@ end
 
 function mod:GROUP_ROSTER_UPDATE()
   if self:IsInParty() then
-    table.wipe(self.pendingGroups)
     self.UI:SetMapButton(nil)
     if self.activeQuestID and isWQAGroup then
       if UnitIsGroupLeader("player") then
@@ -343,6 +342,7 @@ function mod:MaybeLeaveParty()
     lastLeave = GetTime()
     self:Debug("Leaving party!")
     LeaveParty()
+    self.UI:SetPendingInvites()
   end
 end
 
@@ -422,8 +422,10 @@ end
 function mod:CreateQuestGroup(questID)
   StaticPopup_Hide("WQA_FIND_GROUP")
   StaticPopup_Hide("WQA_NEW_GROUP")
-  table.wipe(self.pendingGroups)
   self.activeQuestID = questID or self.activeQuestID
+  if (self.currentQuestInfo == nil) or (self.currentQuestInfo.questID ~= self.activeQuestID) then 
+    table.wipe(self.pendingGroups)
+  end
   local info = self:GetQuestInfo(self.activeQuestID)
   self.currentQuestInfo = info
   -- known bug: doesn't work with Kosumoth the Hungering, because "info" is empty (no activityID)
