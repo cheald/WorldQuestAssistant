@@ -10,7 +10,6 @@ mod.QuestDB = {
   Blacklist = {
     -- Broken Shore
     [45379] = true,     -- Treasure Master Iks'reeged
-    [46825] = true,     -- Mud Mucking
     [46308] = true,     -- Leave A Trail
 
     -- Kirin Tor Quests
