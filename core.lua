@@ -192,16 +192,17 @@ function mod:QUEST_ACCEPTED(event, index, questID)
       self.UI:SetupTrackerBlocks()
     end)
     local isEligibleParty = not mod:IsInParty() or (self.db.profile.permitGroupQueueing and UnitIsGroupLeader("player"))
-    if isEligibleParty and not mod:IsInOtherQueues() then
+    local hasAlreadySearched = self.currentQuestInfo and (tonumber(self.currentQuestInfo.questID) == questID) and (#self.pendingGroups > 0)
+    if isEligibleParty and not hasAlreadySearched and not mod:IsInOtherQueues() then
       local info = self:GetQuestInfo(questID)
       if mod.db.profile.usePopups.joinGroup then
-        C_Timer.After(1.5, function()
+--        C_Timer.After(1.5, function()
           StaticPopupDialogs["WQA_FIND_GROUP"].text = string.format(L["Do you want to find a group for '%s'?"], info.questName)
           StaticPopupDialogs["WQA_FIND_GROUP"].OnAccept = function()
             mod:FindQuestGroups(questID)
           end
           StaticPopup_Show("WQA_FIND_GROUP")
-        end)
+--        end)
       end
     end
   end

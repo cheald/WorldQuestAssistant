@@ -187,7 +187,11 @@ local function CreateButtonGroup()
   ButtonsFrame.Attach = function(self, block, questID)
     self:SetParent(block)
     if block and questID then
-      f.questID = tostring(questID)
+      local questIDstr = tostring(questID)
+      if (f.questID ~= questIDstr) then
+        f.questID = questIDstr
+        self.ApplyFrame:SetPendingInvites()
+      end
       blockAttachments[f.questID] = f
       f:Show()
       updateLayout(block)
