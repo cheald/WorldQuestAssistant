@@ -354,10 +354,12 @@ function mod:GetCurrentWorldQuestID()
     end
   end
 
-  for i, module in ipairs(ObjectiveTrackerFrame.MODULES) do
-    for name, block in pairs(module.usedBlocks) do
-      if self:IsEligibleQuest(block.id) then
-        return block.id
+  if ObjectiveTrackerFrame.MODULES then
+      for i, module in ipairs(ObjectiveTrackerFrame.MODULES) do
+        for name, block in pairs(module.usedBlocks) do
+          if self:IsEligibleQuest(block.id) then
+            return block.id
+          end
       end
     end
   end
@@ -430,7 +432,11 @@ function mod:CreateQuestGroup(questID)
   local info = self:GetQuestInfo(self.activeQuestID)
   self.currentQuestInfo = info
   -- known bug: doesn't work with Kosumoth the Hungering, because "info" is empty (no activityID)
-  _G.C_LFGList.CreateListing(info.activityID, info.groupName, 0, 0, "", string.format("Created by World Quest Assistant #WQ:%s#%s#", self.activeQuestID, self:HomeRealmType() or "NIL"), true, false, tonumber(info.questID))
+  if select(4, GetBuildInfo()) >= 80000 then
+    _G.C_LFGList.CreateListing(info.activityID, 0, 0, true, false, tonumber(info.questID))
+  else
+    _G.C_LFGList.CreateListing(info.activityID, info.groupName, 0, 0, "", string.format("Created by World Quest Assistant #WQ:%s#%s#", self.activeQuestID, self:HomeRealmType() or "NIL"), true, false, tonumber(info.questID))
+  end
   isWQAGroup = true
   self:TurnOffRaidConvertWarning()
 end

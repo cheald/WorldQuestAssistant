@@ -1,6 +1,6 @@
 local addon, private = ...
 local WQA = LibStub("AceAddon-3.0"):GetAddon(addon)
-local HBD = LibStub("HereBeDragons-1.0")
+local HBD = LibStub("HereBeDragons-1.0", true) or LibStub("HereBeDragons-2.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("WorldQuestAssistant")
 local mod = WQA:NewModule("Leech Police", "AceEvent-3.0")
 
